@@ -27,7 +27,7 @@ export default function PrivateRoute({
 
   if(authenticated === 0) {
     // Add your own authentication on the below line.
-    setTimeout(() => setAuthenticated(1), 500);
+    setTimeout(() => setAuthenticated(-1), 500);
   }
 
   return (

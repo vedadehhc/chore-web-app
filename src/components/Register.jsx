@@ -6,11 +6,12 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
-import { login } from './../backend/auth';
+import { register } from './../backend/auth';
 
-export default function Login(props) {
+export default function Register(props) {
 
   const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
 
   const [loginStatus, setLoginStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
@@ -19,7 +20,7 @@ export default function Login(props) {
     event.preventDefault();
     setLoginStatus(1);
     
-    const result = await login(username, password);
+    const result = await register(username, password, name);
 
     console.log(result);
     setLoginStatus(2);
@@ -28,6 +29,9 @@ export default function Login(props) {
 
   function handleUsernameChange(event) {
     setUsername(event.target.value);
+  }
+  function handleNameChange(event) {
+    setName(event.target.value);
   }
   function handlePasswordChange(event) {
     setPassword(event.target.value);
@@ -42,6 +46,15 @@ export default function Login(props) {
         placeholder='Username'
         value={username}
         onChange={handleUsernameChange} 
+      />
+      <br/>
+      <input 
+        autoComplete="name"
+        type='text'
+        required
+        placeholder='Name'
+        value={name}
+        onChange={handleNameChange} 
       />
       <br/>
       <input 
