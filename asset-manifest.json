@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/chore-web-app/static/css/main.9d5b29c0.chunk.css",
+    "main.js": "/chore-web-app/static/js/main.b1e456f4.chunk.js",
+    "main.js.map": "/chore-web-app/static/js/main.b1e456f4.chunk.js.map",
+    "runtime-main.js": "/chore-web-app/static/js/runtime-main.0a22ef3d.js",
+    "runtime-main.js.map": "/chore-web-app/static/js/runtime-main.0a22ef3d.js.map",
+    "static/js/2.063acc41.chunk.js": "/chore-web-app/static/js/2.063acc41.chunk.js",
+    "static/js/2.063acc41.chunk.js.map": "/chore-web-app/static/js/2.063acc41.chunk.js.map",
+    "static/js/3.05c51b64.chunk.js": "/chore-web-app/static/js/3.05c51b64.chunk.js",
+    "static/js/3.05c51b64.chunk.js.map": "/chore-web-app/static/js/3.05c51b64.chunk.js.map",
+    "index.html": "/chore-web-app/index.html",
+    "static/css/main.9d5b29c0.chunk.css.map": "/chore-web-app/static/css/main.9d5b29c0.chunk.css.map",
+    "static/js/2.063acc41.chunk.js.LICENSE.txt": "/chore-web-app/static/js/2.063acc41.chunk.js.LICENSE.txt",
+    "static/media/logo.6ce24c58.svg": "/chore-web-app/static/media/logo.6ce24c58.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.0a22ef3d.js",
+    "static/js/2.063acc41.chunk.js",
+    "static/css/main.9d5b29c0.chunk.css",
+    "static/js/main.b1e456f4.chunk.js"
+  ]
+}
