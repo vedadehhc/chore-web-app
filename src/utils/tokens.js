@@ -2,7 +2,11 @@ import parseJwt from './parseJwt';
 
 const REFRESH_TOKEN = 'refreshToken';
 
-let inMemoryTokens;
+let inMemoryTokens = {
+  idToken: null,
+  accessToken: null,
+  exp: -1,
+};
 
 export function setTokens(idToken, accessToken) {
   inMemoryTokens = {

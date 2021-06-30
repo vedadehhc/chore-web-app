@@ -5,6 +5,7 @@ import Header from "./Header";
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Toolbar from '@material-ui/core/Toolbar';
+import { getValidTokens } from '../utils/backend/auth';
 
 export default function PrivateRoute({
   component: Component, 
@@ -13,21 +14,19 @@ export default function PrivateRoute({
 }) {
 
   const [authenticated, setAuthenticated] = useState(0); // 0 = awaiting, 1 = authenticated, -1 = failed
-  const [authUser, setAuthUser] = useState(null);
-  const [authUserInfo, setAuthUserInfo] = useState(null);
-  
-  
-  function authenticateUser(user) {
-    setAuthUser(user);
-  }
-
-  function setUserInfo(userInfo) {
-    setAuthUserInfo(userInfo);
-  }
 
   if(authenticated === 0) {
     // Add your own authentication on the below line.
-    setTimeout(() => setAuthenticated(-1), 500);
+    getValidTokens().then((result) => {
+      if (result) {
+        setAuthenticated(1);
+      } else {
+        setAuthenticated(-1);
+      }
+    }).catch((err) => {
+      console.log(err);
+      setAuthenticated(-1);
+    });
   }
 
   return (
@@ -53,7 +52,7 @@ export default function PrivateRoute({
             <Header selected={selected} />
             <main>
               <Toolbar/>
-              <Component {...props} userInfo={authUserInfo}/>
+              <Component {...props}/>
             </main>
           </div>
         ) : (

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -6,11 +7,10 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
-import { login, getCredentials, refreshTokens } from '../utils/backend/auth';
-import createGroup from '../utils/backend/createGroup';
-import { getRefreshToken } from '../utils/tokens';
+import { login } from '../utils/backend/auth';
 
 export default function Login(props) {
+  const history = useHistory();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,21 +25,16 @@ export default function Login(props) {
 
     console.log(result);
 
+    // TODO: add error handling
     if(result.success) {
-      // console.log("idToken: ", parseJwt(result.response.AuthenticationResult.IdToken));
-      // console.log("accessToken: ", parseJwt(result.response.AuthenticationResult.AccessToken));
-      // console.log("refreshToken: " + parseJwt(result.response.AuthenticationResult.RefreshToken));
+      setLoginStatus(2);
+      history.push('/');
+    } else {
+      setLoginStatus(3);
 
-      const creds = getCredentials(username);
-      console.log('got creds',creds);
-      if (creds) {
-        const res = await createGroup(creds);
-        console.log(res);
-      }
+      // allow resubmission after 5 seconds
+      setTimeout(() => setLoginStatus(0), 5000);
     }
-
-    setLoginStatus(2);
-    setTimeout(() => setLoginStatus(0), 500);
   }
 
   function handleUsernameChange(event) {
@@ -86,23 +81,6 @@ export default function Login(props) {
         <ErrorIcon/>
         : "Login"
         }
-      </Button>
-      <Button
-        onClick={async () => {
-          await refreshTokens();
-
-          console.log('refresh finished');
-          console.log(getRefreshToken());
-
-          const creds = getCredentials(username);
-
-          if (creds) {
-            const res = await createGroup(creds);
-            console.log(res);
-          }
-        }}
-      >
-        refresh
       </Button>
     </form>
   );

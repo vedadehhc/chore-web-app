@@ -1,35 +1,17 @@
-import { InitiateAuthCommand, SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
-import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+import { InitiateAuthCommand, RevokeTokenCommand, SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 
-import { cognitoClient } from './awsConfig';
 import { getRefreshToken, getTokens, setRefreshToken, setTokens } from '../tokens';
 
 export const IDENTITY_POOL_ID = 'us-east-2:f1368add-2f4b-47fc-8b3c-8b65a1c909cb';
 export const USER_POOL_ID = 'us-east-2_ZiUGD7hem';
-
-const REGION ='us-east-2';
+export const REGION ='us-east-2';
+export const COGNITO_ID = 'cognito-idp.'+REGION+'.amazonaws.com/'+USER_POOL_ID;
 const COGNITO_CLIENT_ID = 'deg51c9v98amenr0il094snqc';
-const COGNITO_ID = 'cognito-idp.'+REGION+'.amazonaws.com/'+USER_POOL_ID;
 
-
-export async function getCredentials(username) {
-  const tokens = await getValidTokens();
-  if (!tokens) {
-    return null;
-  }
-
-  console.log(tokens);
-
-  return fromCognitoIdentityPool({
-    client: new CognitoIdentityClient({ region: REGION }),
-    identityPoolId: IDENTITY_POOL_ID,
-    logins: {
-      [COGNITO_ID]: tokens.idToken,
-    },
-    // userIdentifier: username,
-  });
-}
+export const cognitoClient = new CognitoIdentityProviderClient({
+  region: REGION,
+});
 
 export async function login(username, password) {
   try {
@@ -52,7 +34,7 @@ export async function login(username, password) {
   }
 }
 
-export async function register(username, password, name) {
+export async function register(username, password, name, role) {
   try {
     const response = await cognitoClient.send(new SignUpCommand({
       ClientId: COGNITO_CLIENT_ID,
@@ -60,11 +42,34 @@ export async function register(username, password, name) {
       Password: password,
       UserAttributes: [
         {Name: 'name', Value: name},
-        {Name: 'custom:group-role', Value: 'regular'},
+        {Name: 'custom:group-role', Value: role},
       ],
     }));
 
+    // log in auto after regsistering? 
+    // need to add user to dynamo table...
+    // admin user: create group, regular: add to group
+
     return {success: true, message: 'success', response};
+  } catch (err) {
+    console.log(err);
+    return {success: false, message: ''};
+  }
+}
+
+export async function logout() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    return {success: true, message: 'no tokens to revoke'};
+  }
+
+  try {
+    const response = await cognitoClient.send(new RevokeTokenCommand({
+      ClientId: COGNITO_CLIENT_ID,
+      Token: refreshToken,
+    }));
+
+    return {success: true, message: 'logged out succesfully', response};
   } catch (err) {
     console.log(err);
     return {success: false, message: ''};

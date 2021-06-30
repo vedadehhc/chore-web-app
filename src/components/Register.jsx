@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -9,6 +10,7 @@ import ErrorIcon from '@material-ui/icons/Error';
 import { register } from '../utils/backend/auth';
 
 export default function Register(props) {
+  const history = useHistory();
 
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
@@ -20,11 +22,20 @@ export default function Register(props) {
     event.preventDefault();
     setLoginStatus(1);
     
-    const result = await register(username, password, name);
-
+    // add role management
+    const result = await register(username, password, name, 'regular');
     console.log(result);
-    setLoginStatus(2);
-    setTimeout(() => setLoginStatus(0), 500);
+
+    // TODO: add error handling
+    if (result.success) {
+      setLoginStatus(2);
+      history.push('/login');
+    } else {
+      setLoginStatus(3);
+
+      // allow resubmission after 5 seconds
+      setTimeout(() => setLoginStatus(0), 5000);
+    }
   }
 
   function handleUsernameChange(event) {

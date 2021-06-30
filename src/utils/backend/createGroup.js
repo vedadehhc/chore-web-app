@@ -1,24 +1,39 @@
-import {  } from '../backend/awsConfig';
 import  { DynamoDB, PutItemCommand } from '@aws-sdk/client-dynamodb';
-import { getCredentials } from './auth';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
+import { getValidTokens, IDENTITY_POOL_ID, COGNITO_ID, REGION } from './auth';
 
-const REGION = 'us-east-2';
+// add random id, owner user, group name, metadata?
+export default async function createGroup(groupName, ownerID) {
+  // const creds = getCredentials();
+  // console.log(creds);
 
-export default async function createGroup() {
-  const creds = getCredentials();
-  console.log(creds);
+  const tokens = await getValidTokens();
+  if (!tokens) {
+    return {success: false, message: 'no valid tokens'};
+  }
 
   const dynamoClient = new DynamoDB({
     region: REGION, 
-    credentials: creds,
+    credentials: fromCognitoIdentityPool({
+      client: new CognitoIdentityClient({ region: REGION }),
+      identityPoolId: IDENTITY_POOL_ID,
+      logins: {
+        [COGNITO_ID]: tokens.idToken,
+      },
+      // userIdentifier: username,
+    }),
   });
 
   try {
     const putParams = {
       TableName: 'chore-web-app-groups',
       Item: {
-        'groupID': {S: 'abcde'},
-        'numUsers': {N : '12'},
+        'groupID': {S: '12345123'},
+        'groupName': {S: groupName},
+        'numUsers': {N : '1'},
+        'owner': {S: ownerID},
+        'users': {L: [ownerID]},
       },
     };
 
