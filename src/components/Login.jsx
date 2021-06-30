@@ -6,7 +6,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
-import { login } from './../backend/auth';
+import { login, getCredentials, refreshTokens } from '../utils/backend/auth';
+import createGroup from '../utils/backend/createGroup';
+import { getRefreshToken } from '../utils/tokens';
 
 export default function Login(props) {
 
@@ -22,6 +24,20 @@ export default function Login(props) {
     const result = await login(username, password);
 
     console.log(result);
+
+    if(result.success) {
+      // console.log("idToken: ", parseJwt(result.response.AuthenticationResult.IdToken));
+      // console.log("accessToken: ", parseJwt(result.response.AuthenticationResult.AccessToken));
+      // console.log("refreshToken: " + parseJwt(result.response.AuthenticationResult.RefreshToken));
+
+      const creds = getCredentials(username);
+      console.log('got creds',creds);
+      if (creds) {
+        const res = await createGroup(creds);
+        console.log(res);
+      }
+    }
+
     setLoginStatus(2);
     setTimeout(() => setLoginStatus(0), 500);
   }
@@ -70,6 +86,23 @@ export default function Login(props) {
         <ErrorIcon/>
         : "Login"
         }
+      </Button>
+      <Button
+        onClick={async () => {
+          await refreshTokens();
+
+          console.log('refresh finished');
+          console.log(getRefreshToken());
+
+          const creds = getCredentials(username);
+
+          if (creds) {
+            const res = await createGroup(creds);
+            console.log(res);
+          }
+        }}
+      >
+        refresh
       </Button>
     </form>
   );
