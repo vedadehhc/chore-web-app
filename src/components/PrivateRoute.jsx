@@ -5,7 +5,7 @@ import Header from "./Header";
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Toolbar from '@material-ui/core/Toolbar';
-import { getValidTokens } from '../utils/backend/auth';
+import { getValidTokens } from '../utils/auth';
 
 export default function PrivateRoute({
   component: Component, 

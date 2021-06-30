@@ -7,7 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
-import { register } from '../utils/backend/auth';
+import { register } from '../utils/auth';
 
 export default function Register(props) {
   const history = useHistory();

@@ -1,7 +1,9 @@
 import { InitiateAuthCommand, RevokeTokenCommand, SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
 
-import { getRefreshToken, getTokens, setRefreshToken, setTokens } from '../tokens';
+import { clearTokens, getRefreshToken, getTokens, setRefreshToken, setTokens } from './tokens';
 
 export const IDENTITY_POOL_ID = 'us-east-2:f1368add-2f4b-47fc-8b3c-8b65a1c909cb';
 export const USER_POOL_ID = 'us-east-2_ZiUGD7hem';
@@ -9,9 +11,11 @@ export const REGION ='us-east-2';
 export const COGNITO_ID = 'cognito-idp.'+REGION+'.amazonaws.com/'+USER_POOL_ID;
 const COGNITO_CLIENT_ID = 'deg51c9v98amenr0il094snqc';
 
-export const cognitoClient = new CognitoIdentityProviderClient({
+const cognitoClient = new CognitoIdentityProviderClient({
   region: REGION,
 });
+
+let authCognitoClient;
 
 export async function login(username, password) {
   try {
@@ -23,6 +27,18 @@ export async function login(username, password) {
         PASSWORD: password,
       },
     }));
+
+    authCognitoClient = new CognitoIdentityProviderClient({
+      region: REGION,
+      credentials: fromCognitoIdentityPool({
+        client: new CognitoIdentityClient({ region: REGION }),
+        identityPoolId: IDENTITY_POOL_ID,
+        logins: {
+          [COGNITO_ID]: response.AuthenticationResult.IdToken,
+        },
+        // userIdentifier: username,
+      }),
+    });
 
     setTokens(response.AuthenticationResult.IdToken, response.AuthenticationResult.AccessToken);
     setRefreshToken(response.AuthenticationResult.RefreshToken);
@@ -44,6 +60,9 @@ export async function register(username, password, name, role) {
         {Name: 'name', Value: name},
         {Name: 'custom:group-role', Value: role},
       ],
+      ClientMetadata: {
+        'secretKey': process.env.REACT_APP_AUTO_CONFIRM_KEY,
+      },
     }));
 
     // log in auto after regsistering? 
@@ -58,17 +77,36 @@ export async function register(username, password, name, role) {
 }
 
 export async function logout() {
+
+  if (!authCognitoClient) {
+    authCognitoClient = new CognitoIdentityProviderClient({
+      region: REGION,
+      credentials: fromCognitoIdentityPool({
+        client: new CognitoIdentityClient({ region: REGION }),
+        identityPoolId: IDENTITY_POOL_ID,
+        logins: {
+          [COGNITO_ID]: (await getValidTokens()).idToken,
+        },
+        // userIdentifier: username,
+      }),
+    });
+  }
+
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
     return {success: true, message: 'no tokens to revoke'};
   }
 
+  clearTokens();
+
   try {
-    const response = await cognitoClient.send(new RevokeTokenCommand({
+    const response = await authCognitoClient.send(new RevokeTokenCommand({
       ClientId: COGNITO_CLIENT_ID,
       Token: refreshToken,
     }));
 
+    authCognitoClient = null;
+    
     return {success: true, message: 'logged out succesfully', response};
   } catch (err) {
     console.log(err);

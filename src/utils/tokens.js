@@ -2,11 +2,13 @@ import parseJwt from './parseJwt';
 
 const REFRESH_TOKEN = 'refreshToken';
 
-let inMemoryTokens = {
+const initialMemoryTokens = {
   idToken: null,
   accessToken: null,
   exp: -1,
 };
+
+let inMemoryTokens = initialMemoryTokens;
 
 export function setTokens(idToken, accessToken) {
   inMemoryTokens = {
@@ -21,8 +23,7 @@ export function getTokens() {
 
   // invalid tokens
   if (curTime >= inMemoryTokens.exp) {
-    inMemoryTokens.idToken = null;
-    inMemoryTokens.accessToken = null;
+    inMemoryTokens = initialMemoryTokens;
   }
 
   return inMemoryTokens;
@@ -38,5 +39,5 @@ export function getRefreshToken() {
 
 export function clearTokens() {
   localStorage.removeItem(REFRESH_TOKEN);
-  inMemoryTokens = null;
+  inMemoryTokens = initialMemoryTokens;
 }

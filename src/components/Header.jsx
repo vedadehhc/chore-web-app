@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Link as RouterLink} from "react-router-dom";
+import {Link as RouterLink, useHistory} from "react-router-dom";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from '@material-ui/core/Toolbar';
@@ -12,9 +12,11 @@ import HomeIcon from '@material-ui/icons/Home';
 import InfoIcon from '@material-ui/icons/Info';
 import MenuIcon from '@material-ui/icons/Menu';
 import CloseIcon from '@material-ui/icons/Close';
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 
 import {makeStyles} from "@material-ui/core/styles";
 import useCheckMobile from '../utils/useCheckMobile';
+import { logout } from '../utils/auth';
 const useStyles = makeStyles((theme) => ({
   title: {
     margin: theme.spacing(1, 0, 1),
@@ -61,7 +63,7 @@ const navLinks = [
 ];
 
 export default function Header(props) {
-  // styling
+  const history = useHistory();
   const classes = useStyles();
   
   // mobile
@@ -99,7 +101,6 @@ export default function Header(props) {
     setHovered(false);
   }
 
-
   // render
   return (
     <AppBar position='fixed' elevation={navElevation}>
@@ -127,7 +128,7 @@ export default function Header(props) {
                   <Button
                     onClick={() => setDrawerOpen(false)}
                     className={classes.navButtonMobile}
-                    style={{ height: `${Math.floor(100 / (navLinks.length + 1))}%`, maxHeight: 100 }}
+                    style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
                   >
                     <CloseIcon />
                   </Button>
@@ -135,13 +136,22 @@ export default function Header(props) {
                     <Button key={`navbar-mobile-navlink${index}`} component={RouterLink} to={text[1]}
                       onClick={() => setDrawerOpen(false)}
                       className={props.selected === text[1] ? classes.navButtonMobileSelected : classes.navButtonMobile}
-                      style={{ height: `${Math.floor(100 / (navLinks.length + 1))}%`, maxHeight: 100 }}
+                      style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
                     >
                       {text[2]}
                       <div style={{ width: 20 }} />
                       {text[0]}
                     </Button>
                   ))}
+                  <Button
+                    onClick={() => setDrawerOpen(false)}
+                    className={classes.navButtonMobile}
+                    style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
+                  >
+                    <ExitToAppIcon/>
+                    <div style={{ width: 20 }} />
+                    Logout
+                  </Button>
                 </div>
               </Drawer>
             </React.Fragment>
@@ -155,6 +165,12 @@ export default function Header(props) {
             ))
           }
         </div>
+        {isMobile || <div style={{flexGrow: 1}}></div>}
+        {isMobile || <div>
+          <Button variant='contained' color='secondary' className={classes.navButton} component={RouterLink} to={'/logout'}>
+            Logout
+          </Button>
+        </div>}
       </Toolbar>
     </AppBar>
   );
