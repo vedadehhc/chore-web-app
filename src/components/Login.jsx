@@ -6,10 +6,16 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
+<<<<<<< HEAD
 import { login } from './../backend/auth';
 import  { DynamoDB, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+=======
+import { login, getCredentials, refreshTokens } from '../utils/backend/auth';
+import createGroup from '../utils/backend/createGroup';
+import { getRefreshToken } from '../utils/tokens';
+>>>>>>> a3f71fc4cf226936b0a1fa29a7b6a53a1d97cfa5
 
 export default function Login(props) {
 
@@ -26,6 +32,7 @@ export default function Login(props) {
 
     console.log(result);
 
+<<<<<<< HEAD
     if (result.success) {
       const dynamoClient = new DynamoDB({
         region: 'us-east-2', 
@@ -53,6 +60,18 @@ export default function Login(props) {
         console.log('succ', data);
       } catch(err) {
         console.log(err);
+=======
+    if(result.success) {
+      // console.log("idToken: ", parseJwt(result.response.AuthenticationResult.IdToken));
+      // console.log("accessToken: ", parseJwt(result.response.AuthenticationResult.AccessToken));
+      // console.log("refreshToken: " + parseJwt(result.response.AuthenticationResult.RefreshToken));
+
+      const creds = getCredentials(username);
+      console.log('got creds',creds);
+      if (creds) {
+        const res = await createGroup(creds);
+        console.log(res);
+>>>>>>> a3f71fc4cf226936b0a1fa29a7b6a53a1d97cfa5
       }
     }
 
@@ -104,6 +123,23 @@ export default function Login(props) {
         <ErrorIcon/>
         : "Login"
         }
+      </Button>
+      <Button
+        onClick={async () => {
+          await refreshTokens();
+
+          console.log('refresh finished');
+          console.log(getRefreshToken());
+
+          const creds = getCredentials(username);
+
+          if (creds) {
+            const res = await createGroup(creds);
+            console.log(res);
+          }
+        }}
+      >
+        refresh
       </Button>
     </form>
   );
