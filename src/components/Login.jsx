@@ -6,16 +6,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
-<<<<<<< HEAD
-import { login } from './../backend/auth';
-import  { DynamoDB, PutItemCommand } from '@aws-sdk/client-dynamodb';
-import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
-import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-=======
 import { login, getCredentials, refreshTokens } from '../utils/backend/auth';
 import createGroup from '../utils/backend/createGroup';
 import { getRefreshToken } from '../utils/tokens';
->>>>>>> a3f71fc4cf226936b0a1fa29a7b6a53a1d97cfa5
 
 export default function Login(props) {
 
@@ -32,35 +25,6 @@ export default function Login(props) {
 
     console.log(result);
 
-<<<<<<< HEAD
-    if (result.success) {
-      const dynamoClient = new DynamoDB({
-        region: 'us-east-2', 
-        credentials: fromCognitoIdentityPool({
-          client: new CognitoIdentityClient({ region: 'us-east-2' }),
-          identityPoolId: 'us-east-2:f1368add-2f4b-47fc-8b3c-8b65a1c909cb',
-          logins: {
-            'cognito-idp.us-east-2.amazonaws.com/us-east-2_ZiUGD7hem': result.result.AuthenticationResult.IdToken,
-          },
-          // userIdentifier: username,
-        })
-      });
-      console.log('created client');
-      try {
-        const putParams = {
-          TableName: 'chore-web-app-groups',
-          Item: {
-            'groupID': {S: 'abcdefg'},
-            'numUsers': {N : '12'},
-          },
-        };
-    
-        const data = await dynamoClient.send(new PutItemCommand(putParams));
-        
-        console.log('succ', data);
-      } catch(err) {
-        console.log(err);
-=======
     if(result.success) {
       // console.log("idToken: ", parseJwt(result.response.AuthenticationResult.IdToken));
       // console.log("accessToken: ", parseJwt(result.response.AuthenticationResult.AccessToken));
@@ -71,7 +35,6 @@ export default function Login(props) {
       if (creds) {
         const res = await createGroup(creds);
         console.log(res);
->>>>>>> a3f71fc4cf226936b0a1fa29a7b6a53a1d97cfa5
       }
     }
 
