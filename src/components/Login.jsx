@@ -7,6 +7,9 @@ import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 
 import { login } from './../backend/auth';
+import  { DynamoDB, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 
 export default function Login(props) {
 
@@ -22,6 +25,37 @@ export default function Login(props) {
     const result = await login(username, password);
 
     console.log(result);
+
+    if (result.success) {
+      const dynamoClient = new DynamoDB({
+        region: 'us-east-2', 
+        credentials: fromCognitoIdentityPool({
+          client: new CognitoIdentityClient({ region: 'us-east-2' }),
+          identityPoolId: 'us-east-2:f1368add-2f4b-47fc-8b3c-8b65a1c909cb',
+          logins: {
+            'cognito-idp.us-east-2.amazonaws.com/us-east-2_ZiUGD7hem': result.result.AuthenticationResult.IdToken,
+          },
+          // userIdentifier: username,
+        })
+      });
+      console.log('created client');
+      try {
+        const putParams = {
+          TableName: 'chore-web-app-groups',
+          Item: {
+            'groupID': {S: 'abcdefg'},
+            'numUsers': {N : '12'},
+          },
+        };
+    
+        const data = await dynamoClient.send(new PutItemCommand(putParams));
+        
+        console.log('succ', data);
+      } catch(err) {
+        console.log(err);
+      }
+    }
+
     setLoginStatus(2);
     setTimeout(() => setLoginStatus(0), 500);
   }
