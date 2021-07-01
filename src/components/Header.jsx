@@ -143,7 +143,7 @@ export default function Header(props) {
                       {text[0]}
                     </Button>
                   ))}
-                  <Button
+                  <Button component={RouterLink} to={'/logout'}
                     onClick={() => setDrawerOpen(false)}
                     className={classes.navButtonMobile}
                     style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}

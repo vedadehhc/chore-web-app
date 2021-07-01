@@ -45,8 +45,7 @@ export async function login(username, password) {
 
     return {success: true, message: 'success', response};
   } catch (err) {
-    console.log(err);
-    return {success: false, message: ''};
+    return {success: false, message: err.message};
   }
 }
 
@@ -71,8 +70,7 @@ export async function register(username, password, name, role) {
 
     return {success: true, message: 'success', response};
   } catch (err) {
-    console.log(err);
-    return {success: false, message: ''};
+    return {success: false, message: err.message};
   }
 }
 
@@ -109,8 +107,7 @@ export async function logout() {
     
     return {success: true, message: 'logged out succesfully', response};
   } catch (err) {
-    console.log(err);
-    return {success: false, message: ''};
+    return {success: false, message: err.message};
   }
 }
 
@@ -149,7 +146,6 @@ export async function refreshTokens() {
 
     return {success: true, message: 'success'};
   } catch (err) {
-    console.log(err);
-    return {success: false, message: err};
+    return {success: false, message: err.message};
   }
 }
