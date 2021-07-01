@@ -1,4 +1,5 @@
 import PrivateRoute from './components/PrivateRoute';
+import PublicRoute from './components/PublicRoute';
 import Home from './components/Home';
 import About from './components/About';
 import Login from './components/Login';
@@ -28,8 +29,8 @@ function App() {
           <PrivateRoute path='/' exact component={Home} selected='/'/>
           <PrivateRoute path='/about' exact component={About} selected='/about'/>
           <PrivateRoute path='/logout' exacct component={Logout} />
-          <Route path='/login' exact component={Login} />
-          <Route path='/register' exact component={Register} />
+          <PublicRoute path='/login' exact component={Login} />
+          <PublicRoute path='/register' exact component={Register} />
           <Route render={() => <Redirect to="/" />}/>
         </Switch>
       </HashRouter>

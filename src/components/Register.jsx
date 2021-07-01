@@ -16,18 +16,19 @@ import Grid from '@material-ui/core/Grid';
 import Collapse from '@material-ui/core/Collapse';
 import Card from '@material-ui/core/Card';
 import IconButton from '@material-ui/core/IconButton';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
+// import Radio from '@material-ui/core/Radio';
+// import RadioGroup from '@material-ui/core/RadioGroup';
+// import FormControlLabel from '@material-ui/core/FormControlLabel';
+// import FormLabel from '@material-ui/core/FormLabel';
 
 import CloseIcon from '@material-ui/icons/Close';
+import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
+import DoneIcon from '@material-ui/icons/Done';
 import ErrorIcon from '@material-ui/icons/Error';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
 import Copyright from './Copyright';
 import { register } from '../utils/auth';
-import { generateGroupID, generateValidGroupID } from '../utils/groups';
 
 const useStyles = makeStyles((theme) => ({
   wrapper: {
@@ -50,15 +51,7 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(1),
   },
   title: {
-      margin: theme.spacing(0, 0, 2),
-  },
-  buttonProgress: {
-    color: blue[500],
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -8,
-    marginLeft: -12,
+    margin: theme.spacing(0, 0, 2),
   },
 }));
 
@@ -66,50 +59,41 @@ export default function Register(props) {
   const classes = useStyles();
   const history = useHistory();
 
-  const [role, setRole] = useState('');
+  // const [role, setRole] = useState('');
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [groupName, setGroupName] = useState('');
-  const [groupCode, setGroupCode] = useState('');
+  // const [groupName, setGroupName] = useState('');
+  // const [groupCode, setGroupCode] = useState('');
 
-  const [loginStatus, setLoginStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
-  const [errorMessage, setErrorMessage] = useState('');
+  const [registerStatus, setRegisterStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
+  const [responseMessage, setResponseMessage] = useState('');
+
+
+  // TODO: rework so that all group CRUD is after auth. (multiple group)
+  // remove extra options (parent, child, code, etc.)
+  // auth immediately after register
 
   async function handleRegister(event) {
     event.preventDefault();
-    setLoginStatus(1);
-
-    if (role === 'child') {
-      // check if group is valid
-      
-    }
-    const r = await generateValidGroupID();
-    console.log(r);
+    setRegisterStatus(1);
     
-    // add role management
-    const roleName = role === 'parent' ? 'owner' : 'regular';
-    const result = await register(username, password, name, roleName);
-
-    if (role === 'parent') {
-      // create a new group with this owner
-    } else {
-      // add user to group
-    }
+    const result = await register(username, password, name);
 
     if (result.success) {
-      setLoginStatus(2);
+      setRegisterStatus(2);
       // auto login?
-      history.push('/login');
+      // history.push('/login');
+      setResponseMessage('Registered successfully!');
     } else {
-      setLoginStatus(3);
-      setErrorMessage(result.message);
+      setRegisterStatus(3);
+      setResponseMessage(result.message);
     }
   }
 
-  function handleRoleChange(event) {
-    setRole(event.target.value);
-  }
+  // function handleRoleChange(event) {
+  //   setRole(event.target.value);
+  // }
   function handleUsernameChange(event) {
     setUsername(event.target.value);
   }
@@ -119,12 +103,12 @@ export default function Register(props) {
   function handlePasswordChange(event) {
     setPassword(event.target.value);
   }
-  function handleGroupNameChange(event) {
-    setGroupName(event.target.value);
-  }
-  function handleGroupCodeChange(event) {
-    setGroupCode(event.target.value);
-  }
+  // function handleGroupNameChange(event) {
+  //   setGroupName(event.target.value);
+  // }
+  // function handleGroupCodeChange(event) {
+  //   setGroupCode(event.target.value);
+  // }
 
   return (
     <Container component="main" maxWidth="xs">
@@ -143,7 +127,7 @@ export default function Register(props) {
         </Typography>
         <div style={{height:10}}/>
         <form className={classes.form} onSubmit={handleRegister}>
-          <RadioGroup 
+          {/* <RadioGroup 
             row 
             style={{alignItems:'center', justifyContent: 'center'}} 
             name='role' 
@@ -163,7 +147,7 @@ export default function Register(props) {
               control={<Radio required disabled={loginStatus === 1 || loginStatus === 2}/>} 
               label="Child"
             />
-          </RadioGroup>
+          </RadioGroup> */}
           <TextField
             variant="outlined"
             margin="normal"
@@ -178,7 +162,7 @@ export default function Register(props) {
             value={username}
             onInput={handleUsernameChange}
             autoFocus
-            disabled={loginStatus === 1 || loginStatus === 2}
+            disabled={registerStatus === 1 || registerStatus === 2}
           />
           <TextField
             variant="outlined"
@@ -193,7 +177,7 @@ export default function Register(props) {
             // error={emailError}
             value={name}
             onInput={handleNameChange}
-            disabled={loginStatus === 1 || loginStatus === 2}
+            disabled={registerStatus === 1 || registerStatus === 2}
           />
           <TextField
             variant="outlined"
@@ -207,9 +191,9 @@ export default function Register(props) {
             autoComplete="current-password"
             value={password}
             onInput={handlePasswordChange}
-            disabled={loginStatus === 1 || loginStatus === 2}
+            disabled={registerStatus === 1 || registerStatus === 2}
           />
-          <Collapse in={role==='parent'}>
+          {/* <Collapse in={role==='parent'}>
             <TextField
               variant='outlined'
               margin='normal'
@@ -222,7 +206,7 @@ export default function Register(props) {
               autoComplete='groupName'
               value={groupName}
               onInput={handleGroupNameChange}
-              disabled={loginStatus === 1 || loginStatus === 2}
+              disabled={registerStatus === 1 || registerStatus === 2}
             /> 
           </Collapse>
           <Collapse in={role==='child'}>
@@ -238,20 +222,22 @@ export default function Register(props) {
               autoComplete='groupCode'
               value={groupCode}
               onInput={handleGroupCodeChange}
-              disabled={loginStatus === 1 || loginStatus === 2}
+              disabled={registerStatus === 1 || registerStatus === 2}
             /> 
-          </Collapse>
-          <Collapse in={errorMessage}>
+          </Collapse> */}
+          <Collapse in={responseMessage}>
             {/* <Alert severity="error">{errorMessage}</Alert> */}
-            <Card style={{backgroundColor: '#e57373'}}>
+            <Card style={{
+              backgroundColor: ['','','#81c784','#e57373'][registerStatus],
+            }}>
               <div style={{display: 'flex', justifyContent: 'flex-start', alignItems: 'center', padding: 7}}>
-                <ErrorIcon/>
+                {[null,<HourglassEmptyIcon/>,<DoneIcon/>,<ErrorIcon/>][registerStatus]}
                 <div style={{marginLeft: 10, marginRight: 10}}>
-                  {errorMessage}
+                  {responseMessage}
                 </div>
                 <div style={{flexGrow: 1}}/>
                 <IconButton 
-                  onClick={() => setErrorMessage('')}
+                  onClick={() => setResponseMessage('')}
                   aria-label="close"
                   size="small"
                 >
@@ -261,14 +247,25 @@ export default function Register(props) {
             </Card>
           </Collapse>
           <div className={classes.wrapper}>
+            <Collapse in={registerStatus===2}>
+              <Button
+                fullWidth
+                variant='outlined'
+                style={{backgroundColor: '#81c784', marginBottom: 5}}
+                component={RouterLink}
+                to='/login'
+              >
+                Go to Log in
+              </Button>
+            </Collapse>
             <Button
               type="submit"
               fullWidth
               variant="contained"
               color="primary"
-              disabled={loginStatus === 1 || loginStatus === 2}
+              disabled={registerStatus === 1 || registerStatus === 2}
             >
-              {loginStatus === 1 ?
+              {registerStatus === 1 ?
               <CircularProgress size={24}/>
               :  "Register"
               }

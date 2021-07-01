@@ -49,7 +49,7 @@ export async function login(username, password) {
   }
 }
 
-export async function register(username, password, name, role) {
+export async function register(username, password, name) {
   try {
     const response = await cognitoClient.send(new SignUpCommand({
       ClientId: COGNITO_CLIENT_ID,
@@ -57,7 +57,6 @@ export async function register(username, password, name, role) {
       Password: password,
       UserAttributes: [
         {Name: 'name', Value: name},
-        {Name: 'custom:group-role', Value: role},
       ],
       ClientMetadata: {
         'secretKey': process.env.REACT_APP_AUTO_CONFIRM_KEY,

@@ -44,7 +44,7 @@ export async function generateValidGroupID() {
     }
 
     const response = await dynamoClient.send(new GetItemCommand(getParams));
-
+    
     console.log(response);
   } catch (err) {
     console.log(err);
