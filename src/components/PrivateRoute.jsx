@@ -42,11 +42,11 @@ export default function PrivateRoute({
     setGroupsStatus(1);
     const result = await listGroups();
     
-    console.log(result);
+    // console.log(result);
 
     if (result.success) {
-      setGroupsStatus(2);
       setGroups(result.response.Items);
+      setGroupsStatus(2);
     } else {
       setGroupsStatus(3);
       setGroupsError(result.message);
@@ -82,7 +82,12 @@ export default function PrivateRoute({
             />
             <main style={{flexGrow: 1, padding: '2rem'}}>
               <Toolbar/>
-              <Component {...props} handleLoadGroups={handleLoadGroups}/>
+              <Component 
+                {...props}
+                handleLoadGroups={handleLoadGroups}
+                groups={groups}
+                groupsStatus={groupsStatus}
+              />
             </main>
           </div>
         ) : (

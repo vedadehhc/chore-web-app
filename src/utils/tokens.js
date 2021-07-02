@@ -1,6 +1,7 @@
 import parseJwt from './parseJwt';
 
 const REFRESH_TOKEN = 'refreshToken';
+const IDENTITY_ID = 'identityID';
 
 const initialMemoryTokens = {
   idToken: null,
@@ -37,7 +38,17 @@ export function getRefreshToken() {
   return localStorage.getItem(REFRESH_TOKEN);
 }
 
+// use for better security with IAM but who cares
+// export function setIdentityID(identityID) {
+//   localStorage.setItem(IDENTITY_ID, identityID);
+// }
+
+// export function getIdentityID() {
+//   return localStorage.getItem(IDENTITY_ID);
+// }
+
 export function clearTokens() {
   localStorage.removeItem(REFRESH_TOKEN);
+  localStorage.removeItem(IDENTITY_ID);
   inMemoryTokens = initialMemoryTokens;
 }

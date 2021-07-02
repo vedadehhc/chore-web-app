@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Link as RouterLink } from "react-router-dom";
+import {Link as RouterLink, useLocation } from "react-router-dom";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from '@material-ui/core/Toolbar';
@@ -21,6 +21,7 @@ import CreateIcon from '@material-ui/icons/Create';
 import HomeIcon from '@material-ui/icons/Home';
 import MenuIcon from '@material-ui/icons/Menu';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+import GroupIcon from '@material-ui/icons/Group';
 
 import {makeStyles} from "@material-ui/core/styles";
 import useCheckMobile from '../utils/useCheckMobile';
@@ -43,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     color: '#333',
     width: '100%',
     '&:hover':{
-      backgroundColor: theme.palette.secondary.light,
+      backgroundColor: '#ddd',
     }
   },
   navButtonSelected: {
@@ -51,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     backgroundColor: theme.palette.secondary.light,
     '&:hover':{
-      backgroundColor: '#fff',
+      backgroundColor: theme.palette.secondary.main,
     }
   },
   drawerDiv: {
@@ -88,6 +89,22 @@ export default function Header(props) {
   useEffect(() => {
     handleLoadGroups();
   }, []);
+
+  const location = useLocation();
+
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedGroupID, setSelectedGroupID] = useState('');
+
+  useEffect(() => {
+    setSelectedGroup('');
+    setSelectedGroupID('');
+    groups.forEach(group => {
+      if (location.pathname.startsWith(`/groups/${group.groupID.S}`)) {
+        setSelectedGroup(group.groupName.S);
+        setSelectedGroupID(group.groupID.S);
+      }
+    });
+  }, [groups, location])
   
   // mobile
   const isMobile = useCheckMobile();
@@ -113,15 +130,6 @@ export default function Header(props) {
 
   // Menu 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [hovered, setHovered] = useState(false);
-
-  function handleHovering() {
-    setHovered(true);
-  }
-
-  function handleUnhovering() {
-    setHovered(false);
-  }
 
   // render
   return (
@@ -145,15 +153,13 @@ export default function Header(props) {
             </Button>
           </div>
           <div style={{flexGrow: 1}}></div>
-          <div>
-            Current group
-          </div>
+          <div><Typography variant='h5'>{selectedGroup}</Typography></div>
           <div style={{flexGrow: 1}}></div>
-          {isMobile || <div>
+          {/*isMobile || <div>
             <Button variant='contained' color='secondary' className={classes.navButton} component={RouterLink} to={'/logout'}>
               Logout
             </Button>
-          </div>}
+          </div> */ }
         </Toolbar>
       </AppBar>
       <Drawer 
@@ -185,9 +191,7 @@ export default function Header(props) {
             {navLinks.map((text, index) => (
               <ListItem button key={`navlink-${index}`} component={RouterLink} to={text[1]}
                 onClick={() => setDrawerOpen(false)}
-                className={props.selected === text[1] && !hovered ? classes.navButtonSelected : classes.navButton}
-                onMouseEnter={handleHovering}
-                onMouseLeave={handleUnhovering}
+                className={props.selected === text[1] ? classes.navButtonSelected : classes.navButton}
               >
                 <ListItemIcon>{text[2]}</ListItemIcon>
                 <ListItemText primary={text[0]}/>
@@ -217,15 +221,16 @@ export default function Header(props) {
             }
             {groupsStatus === 2 && 
               groups.map((group, index) => (
-                <ListItem button 
-                  key={`group-${group.groupID.S}`} 
-                  component={RouterLink}
-                  className={props.selected === '/group' && !hovered ? classes.navButtonSelected : classes.navButton}
-                  onMouseEnter={handleHovering}
-                  onMouseLeave={handleUnhovering}
-                >
-                  <ListItemText primary={group.groupName.S} secondary={group.groupID.S}></ListItemText>
-                </ListItem>
+                  <ListItem button 
+                    key={`group-${group.groupID.S}`} 
+                    component={RouterLink}
+                    onClick={() => setDrawerOpen(false)}
+                    to={`/groups/${group.groupID.S}`}
+                    className={selectedGroupID === group.groupID.S ? classes.navButtonSelected : classes.navButton}
+                  >
+                    <ListItemIcon><GroupIcon/></ListItemIcon>
+                    <ListItemText primary={group.groupName.S} secondary={group.groupID.S}></ListItemText>
+                  </ListItem>
               ))
             }
             {groupsStatus === 3 && 
@@ -237,8 +242,6 @@ export default function Header(props) {
           <List><ListItem button component={RouterLink} to={'/logout'}
             onClick={() => setDrawerOpen(false)}
             className={classes.navButton}
-            onMouseEnter={handleHovering}
-            onMouseLeave={handleUnhovering}
           >
             <ListItemIcon><ExitToAppIcon/></ListItemIcon>
             <ListItemText primary='Logout'/>

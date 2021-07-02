@@ -17,7 +17,7 @@ export default function CreateGroup(props) {
     event.preventDefault();
 
     const result = await createGroup(groupName);
-    console.log(result);
+    // console.log(result);
     props.handleLoadGroups();
   }
 

@@ -1,5 +1,4 @@
 import  { PutItemCommand, GetItemCommand, UpdateItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
-import { getValidTokens } from './auth';
 import { getNewDynamoClient } from './dynamo';
 import parseJwt from './parseJwt';
 
@@ -81,18 +80,16 @@ export async function createGroup(groupName) {
   if(!client.success) {
     return {success: false, message: client.message};
   }
-
   const dynamoClient = client.dynamoClient;
-
 
   const groupID = await generateValidGroupID(dynamoClient);
   if (!groupID.success) {
     return {success: false, message: groupID.message};
   }
 
-  const parsedToken = parseJwt(client.tokens.idToken)
-  const ownerID = parsedToken['cognito:username'];
+  const parsedToken = parseJwt(client.tokens.idToken);
   const ownerName = parsedToken['name'];
+  const ownerID = parsedToken['cognito:username']
 
   try {
     const putGroupParams = {
@@ -101,7 +98,7 @@ export async function createGroup(groupName) {
         'groupID': {S: groupID.groupCode},
         'groupName': {S: groupName},
         'numUsers': {N : '1'},
-        'owner': {S: ownerID},
+        'ownerID': {S: ownerID},
         'users': {SS: [ownerID]},
       },
     };
@@ -133,7 +130,6 @@ export async function joinGroup(groupCode) {
   if(!client.success) {
     return {success: false, message: client.message};
   }
-
   const dynamoClient = client.dynamoClient;
 
   const parsedToken = parseJwt(client.tokens.idToken)

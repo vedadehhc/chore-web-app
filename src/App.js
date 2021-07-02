@@ -7,6 +7,7 @@ import Logout from './components/Logout';
 import Register from './components/Register';
 import CreateGroup from './components/CreateGroup';
 import JoinGroup from './components/JoinGroup';
+import Group from './components/Groups';
 
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { HashRouter, Route, Redirect, Switch } from "react-router-dom";
@@ -33,7 +34,7 @@ function App() {
           <PrivateRoute path='/logout' exact component={Logout} />
           <PrivateRoute path='/createGroup' exact component={CreateGroup} selected='/createGroup'/>
           <PrivateRoute path='/joinGroup' exact component={JoinGroup} selected='/joinGroup'/>
-          <PrivateRoute path='/group' exact component={JoinGroup} selected='/group'/>
+          <PrivateRoute path='/groups' component={Group} selected='/groups'/>
           <PublicRoute path='/login' exact component={Login} />
           <PublicRoute path='/register' exact component={Register} />
           <Route render={() => <Redirect to="/" />}/>

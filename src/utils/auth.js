@@ -1,7 +1,7 @@
 import { InitiateAuthCommand, RevokeTokenCommand, SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
+import { CognitoIdentityClient, GetIdCommand } from '@aws-sdk/client-cognito-identity';
 
 import { clearTokens, getRefreshToken, getTokens, setRefreshToken, setTokens } from './tokens';
 
@@ -27,7 +27,8 @@ export async function login(username, password) {
         PASSWORD: password,
       },
     }));
-
+    
+    
     authCognitoClient = new CognitoIdentityProviderClient({
       region: REGION,
       credentials: fromCognitoIdentityPool({
@@ -148,3 +149,32 @@ export async function refreshTokens() {
     return {success: false, message: err.message};
   }
 }
+
+// export async function getValidIdentityID() {
+//   let identityID = getIdentityID();
+//   if (identityID) {
+//     return {success: true, identityID};
+//   }
+
+//   const tokens = await getValidTokens();
+
+//   if (!tokens) {
+//     return {success: false, message: 'no valid tokens'};
+//   }
+
+//   try {
+//     const identityClient = new CognitoIdentityClient({ region: REGION });
+
+//     const response = await identityClient.send(new GetIdCommand({
+//       IdentityPoolId: IDENTITY_POOL_ID,
+//       Logins: {
+//         [COGNITO_ID]: tokens.idToken,
+//       },
+//     }));
+
+//     setIdentityID(response.identityID);
+//     return {success: true, identityID: response.identityID};
+//   } catch (err) {
+//     return {success: false, message: err.message};
+//   }
+// }
