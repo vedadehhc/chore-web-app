@@ -23,5 +23,5 @@ export async function getNewDynamoClient() {
     }),
   });
 
-  return {success: true, dynamoClient};
+  return {success: true, dynamoClient, tokens};
 }

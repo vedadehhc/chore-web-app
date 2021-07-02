@@ -5,7 +5,9 @@ import Header from "./Header";
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Toolbar from '@material-ui/core/Toolbar';
+
 import { getValidTokens } from '../utils/auth';
+import { listGroups } from '../utils/groups';
 
 export default function PrivateRoute({
   component: Component, 
@@ -29,6 +31,28 @@ export default function PrivateRoute({
     });
   }
 
+  
+
+  // groups
+  const [groups, setGroups] = useState([]);
+  const [groupsStatus, setGroupsStatus] = useState(0); // 0 = nothing, 1 = loading, 2 = success, 3 = error
+  const [groupsError, setGroupsError] = useState('');
+
+  async function handleLoadGroups() {
+    setGroupsStatus(1);
+    const result = await listGroups();
+    
+    console.log(result);
+
+    if (result.success) {
+      setGroupsStatus(2);
+      setGroups(result.response.Items);
+    } else {
+      setGroupsStatus(3);
+      setGroupsError(result.message);
+    }
+  }
+
   return (
     <Route
      {...rest} 
@@ -48,11 +72,17 @@ export default function PrivateRoute({
         </Grid>
       ) : (
         (authenticated === 1) ? (
-          <div>
-            <Header selected={selected} />
-            <main>
+          <div style={{display: 'flex'}}>
+            <Header 
+              selected={selected} 
+              groups={groups}
+              groupsStatus={groupsStatus}
+              groupsError={groupsError}
+              handleLoadGroups={handleLoadGroups}
+            />
+            <main style={{flexGrow: 1, padding: '2rem'}}>
               <Toolbar/>
-              <Component {...props}/>
+              <Component {...props} handleLoadGroups={handleLoadGroups}/>
             </main>
           </div>
         ) : (

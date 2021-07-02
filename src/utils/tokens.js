@@ -19,7 +19,7 @@ export function setTokens(idToken, accessToken) {
 }
 
 export function getTokens() {
-  const curTime = Math.ceil(Date.now()/1000) + 60; // current time in seconds + 1 minute
+  const curTime = Math.ceil(Date.now()/1000) + 3*60; // current time in seconds + 3 minutes
 
   // invalid tokens
   if (curTime >= inMemoryTokens.exp) {

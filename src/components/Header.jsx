@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Link as RouterLink, useHistory} from "react-router-dom";
+import {Link as RouterLink } from "react-router-dom";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from '@material-ui/core/Toolbar';
@@ -7,17 +7,28 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Drawer from '@material-ui/core/Drawer';
+import List from '@material-ui/core/List';
+import ListSubheader from '@material-ui/core/ListSubheader';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import Grid from '@material-ui/core/Grid';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
+import AddIcon from '@material-ui/icons/Add';
+import CreateIcon from '@material-ui/icons/Create';
 import HomeIcon from '@material-ui/icons/Home';
-import InfoIcon from '@material-ui/icons/Info';
 import MenuIcon from '@material-ui/icons/Menu';
-import CloseIcon from '@material-ui/icons/Close';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 
 import {makeStyles} from "@material-ui/core/styles";
 import useCheckMobile from '../utils/useCheckMobile';
-import { logout } from '../utils/auth';
+
 const useStyles = makeStyles((theme) => ({
+  appBar: {
+    zIndex: theme.zIndex.drawer + 1,
+  },
   title: {
     margin: theme.spacing(1, 0, 1),
     textTransform: "none",
@@ -30,45 +41,56 @@ const useStyles = makeStyles((theme) => ({
   },
   navButton: {
     color: '#333',
+    width: '100%',
     '&:hover':{
-      backgroundColor: '#fff',
+      backgroundColor: theme.palette.secondary.light,
     }
   },
   navButtonSelected: {
     color: '#333',
-    backgroundColor: '#fff',
+    width: '100%',
+    backgroundColor: theme.palette.secondary.light,
     '&:hover':{
       backgroundColor: '#fff',
     }
   },
-  navButtonMobile: {
-    color: '#fff',
-    width: '100%',
-  },
-  navButtonMobileSelected: {
-    backgroundColor: '#fff',
-    color: '#000',
-    width: '100%',
-  },
   drawerDiv: {
     height: '100vh',
-    backgroundColor: theme.palette.primary.main,
+    // backgroundColor: theme.palette.primary.main,
+    overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  drawerPaperMobile: {
+    width: '80%',
+  },
+  drawerPaper: {
+    width: '20rem',
+  },
+  paperAnchorLeftMobile: {
+    width: '80%',
+  },
+  paperAnchorLeft: {
+    width: '20rem',
   },
 }));
 
 const navLinks = [
   ['Home', '/', <HomeIcon/>], 
-  ['About', '/about', <InfoIcon/>],
-  // ['Courses', '/courses', <LinearScaleIcon/>],
+  ['Create group', '/createGroup', <CreateIcon/>],
+  ['Join group', '/joinGroup', <AddIcon/>],
 ];
 
 export default function Header(props) {
-  const history = useHistory();
   const classes = useStyles();
+
+  const { handleLoadGroups, groupsStatus, groups, groupsError } = props;
+  useEffect(() => {
+    handleLoadGroups();
+  }, []);
   
   // mobile
   const isMobile = useCheckMobile();
-
 
   // Scroll effects
   useEffect(() => {
@@ -103,75 +125,126 @@ export default function Header(props) {
 
   // render
   return (
-    <AppBar position='fixed' elevation={navElevation}>
-      <Toolbar>
-        <div>
-          <Button component={RouterLink} to="/" className={classes.logoButton}>
-            {/* <img src="http://usaco.org/current/images/usaco_logo.png" alt="logo" className={classes.logo} style={{
-              maxHeight: logoRatio*navHeight,
-              transition: navTransitionSpeed,
-            }}/> */}
-            <Typography variant="h6" className={classes.title}>
-              Chore web app
-            </Typography>
-          </Button>
-        </div>
-        <div style={{flexGrow: 1}}></div>
-        <div>
-          {isMobile ? (
-            <React.Fragment>
-              <IconButton className={classes.navButton} onClick={() => setDrawerOpen(true)}>
-                <MenuIcon />
-              </IconButton>
-              <Drawer anchor='top' open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-                <div className={classes.drawerDiv}>
-                  <Button
-                    onClick={() => setDrawerOpen(false)}
-                    className={classes.navButtonMobile}
-                    style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
-                  >
-                    <CloseIcon />
-                  </Button>
-                  {navLinks.map((text, index) => (
-                    <Button key={`navbar-mobile-navlink${index}`} component={RouterLink} to={text[1]}
-                      onClick={() => setDrawerOpen(false)}
-                      className={props.selected === text[1] ? classes.navButtonMobileSelected : classes.navButtonMobile}
-                      style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
-                    >
-                      {text[2]}
-                      <div style={{ width: 20 }} />
-                      {text[0]}
-                    </Button>
-                  ))}
-                  <Button component={RouterLink} to={'/logout'}
-                    onClick={() => setDrawerOpen(false)}
-                    className={classes.navButtonMobile}
-                    style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
-                  >
-                    <ExitToAppIcon/>
-                    <div style={{ width: 20 }} />
-                    Logout
-                  </Button>
-                </div>
-              </Drawer>
-            </React.Fragment>
-          ) : 
-            navLinks.map((text,index) => (
-              <Button key={`navbar-navlink${index}`} component={RouterLink} to={text[1]}
-                className={(props.selected === text[1] && !hovered) ? classes.navButtonSelected : classes.navButton }
+    <React.Fragment>
+      <AppBar position='fixed' elevation={navElevation} className={isMobile || classes.appBar}>
+        <Toolbar>
+          {isMobile && <div>
+            <IconButton className={classes.navButton} onClick={() => setDrawerOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+          </div>}
+          <div>
+            <Button component={RouterLink} to="/" className={classes.logoButton}>
+              {/* <img src="http://usaco.org/current/images/usaco_logo.png" alt="logo" className={classes.logo} style={{
+                maxHeight: logoRatio*navHeight,
+                transition: navTransitionSpeed,
+              }}/> */}
+              <Typography variant="h6" className={classes.title}>
+                Chores
+              </Typography>
+            </Button>
+          </div>
+          <div style={{flexGrow: 1}}></div>
+          <div>
+            Current group
+          </div>
+          <div style={{flexGrow: 1}}></div>
+          {isMobile || <div>
+            <Button variant='contained' color='secondary' className={classes.navButton} component={RouterLink} to={'/logout'}>
+              Logout
+            </Button>
+          </div>}
+        </Toolbar>
+      </AppBar>
+      <Drawer 
+        variant={isMobile ? 'temporary' : 'permanent'}
+        anchor='left'
+        open={drawerOpen}
+        classes={{
+          paperAnchorLeft: isMobile ? classes.paperAnchorLeftMobile : classes.paperAnchorLeft,
+          paper: isMobile ? classes.drawerPaperMobile : classes.drawerPaper,
+        }}
+        style={{
+          width: isMobile ? '80%' : '20rem',
+          flexShrink: 0,
+        }}
+        onClose={() => setDrawerOpen(false)}
+      >
+        {isMobile || <Toolbar/>}
+        <div className={classes.drawerDiv}>
+          {/*isMobile && <Button
+            onClick={() => setDrawerOpen(false)}
+            className={classes.navButtonMobile}
+            style={{ height: `${Math.floor(100 / (navLinks.length + 2))}%`, maxHeight: 100 }}
+            onMouseEnter={handleHovering}
+            onMouseLeave={handleUnhovering}
+          >
+            <CloseIcon />
+          </Button>*/}
+          <List>
+            {navLinks.map((text, index) => (
+              <ListItem button key={`navlink-${index}`} component={RouterLink} to={text[1]}
+                onClick={() => setDrawerOpen(false)}
+                className={props.selected === text[1] && !hovered ? classes.navButtonSelected : classes.navButton}
                 onMouseEnter={handleHovering}
                 onMouseLeave={handleUnhovering}
-              >{text[0]}</Button>
-            ))
-          }
+              >
+                <ListItemIcon>{text[2]}</ListItemIcon>
+                <ListItemText primary={text[0]}/>
+              </ListItem>
+            ))}
+          </List>
+          <Divider/>
+          <List style={{overflow:'auto'}} subheader={
+            <ListSubheader disableSticky>
+              <Typography variant='h6' style={{marginTop: '1rem',marginBottom: '.5rem'}}>
+                Your groups
+              </Typography>
+            </ListSubheader>
+          }>
+            {groupsStatus === 1 && 
+              <Grid
+                container
+                spacing={0}
+                direction="column"
+                alignItems="center"
+                justify="center"
+              >
+                <Grid item xs={3}>
+                  <CircularProgress/>
+                </Grid>
+              </Grid>
+            }
+            {groupsStatus === 2 && 
+              groups.map((group, index) => (
+                <ListItem button 
+                  key={`group-${group.groupID.S}`} 
+                  component={RouterLink}
+                  className={props.selected === '/group' && !hovered ? classes.navButtonSelected : classes.navButton}
+                  onMouseEnter={handleHovering}
+                  onMouseLeave={handleUnhovering}
+                >
+                  <ListItemText primary={group.groupName.S} secondary={group.groupID.S}></ListItemText>
+                </ListItem>
+              ))
+            }
+            {groupsStatus === 3 && 
+              <Typography variant='body1' style={{color: '#e57373'}}>Error: {groupsError}</Typography>
+            }
+          </List>
+          <div style={{flexGrow: 1}}></div>
+          <Divider/>
+          <List><ListItem button component={RouterLink} to={'/logout'}
+            onClick={() => setDrawerOpen(false)}
+            className={classes.navButton}
+            onMouseEnter={handleHovering}
+            onMouseLeave={handleUnhovering}
+          >
+            <ListItemIcon><ExitToAppIcon/></ListItemIcon>
+            <ListItemText primary='Logout'/>
+          </ListItem></List>
         </div>
-        {isMobile || <div style={{flexGrow: 1}}></div>}
-        {isMobile || <div>
-          <Button variant='contained' color='secondary' className={classes.navButton} component={RouterLink} to={'/logout'}>
-            Logout
-          </Button>
-        </div>}
-      </Toolbar>
-    </AppBar>
+      </Drawer>
+    </React.Fragment>
   );
 }
