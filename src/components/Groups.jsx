@@ -1,23 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Route, Switch, useParams, Link as RouterLink } from "react-router-dom";
+import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect } from "react-router-dom";
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import List from '@material-ui/core/List';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
+import IconButton from '@material-ui/core/IconButton';
+import Typography from '@material-ui/core/Typography';
 
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import GroupIcon from '@material-ui/icons/Group';
 import InfoIcon from '@material-ui/icons/Info';
+import DeleteIcon from '@material-ui/icons/Delete';
+import RefreshIcon from '@material-ui/icons/Refresh';
+
+import Tasks from './Tasks';
 
 import { listUsersInGroup } from "../utils/groups";
 import useCheckMobile from "../utils/useCheckMobile";
+import { listUserGroupTasks } from "../utils/tasks";
 
 export default function Groups(props) {
   return (
@@ -38,40 +44,62 @@ const bottomNavLinks = [
     path: '',
     label: 'My tasks',
     icon: <AssignmentIcon/>,
+    adminOnly: false,
   },
   {
     path: '/users',
     label: 'Users',
     icon: <GroupIcon/>,
+    adminOnly: false,
   },
   {
     path: '/info',
     label: 'Info',
     icon: <InfoIcon/>,
+    adminOnly: false,
   },
+  {
+    path: '/tasks',
+    label: 'Manage tasks',
+    icon: <AssignmentIcon/>,
+    adminOnly: true,
+  }
 ];
+
+const useStyles = makeStyles((theme) => ({
+  day: {
+    margin: 2,
+    color: '#bbb'
+  },
+  dayIncluded: {
+    margin: 2,
+    color: '#000',
+  },
+}));
 
 function Group(props) {
   const { groupID } = useParams();
   const isMobile = useCheckMobile();
+  const location = useLocation();
+  const classes = useStyles();
 
   const { groups, groupsStatus } = props;
 
   // navigation
   const [navigation, setNavigation] = useState(0);
-  useEffect(() => setNavigation(0), [groupID]);
-
+  useEffect(() => {
+    bottomNavLinks.forEach((val, index) => {
+      if(location.pathname === `/groups/${groupID}${val.path}`) {
+        setNavigation(index);
+      }
+    });
+  }, [groupID, location]);
 
   const [group, setGroup] = useState(null);
   const [groupAuth, setGroupAuth] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
   const [groupAuthMessage, setGroupAuthMessage] = useState('');
 
   useEffect(checkGroups, [groupID, groupsStatus, groups]);
-  useEffect(() => {
-    if (group && groupAuth === 2) {
-      handleGetGroupUsers();
-    }
-  }, [group]);
 
 
   function checkGroups() {
@@ -104,7 +132,43 @@ function Group(props) {
     setGroup(null);
   }
 
-  const [groupUsers, setGroupUsers] = useState([]);
+
+  // tasks
+  const [userTasks, setUserTasks] = useState(null);
+  const [userTasksStatus, setUserTasksStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
+  const [userTasksMessage, setUserTasksMessage] = useState('');
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+  ];
+
+  async function handleGetUserTasks() {
+    setUserTasksStatus(1);
+    const result = await listUserGroupTasks(group.groupID.S);
+    console.log(result);
+
+    if(result.success) {
+      setUserTasks(result.response.Items);
+      setUserTasksStatus(2);
+    } else {
+      setUserTasksStatus(3);
+      setUserTasksMessage(result.message);
+    }
+  }
+  useEffect(() => {
+    if (group && groupAuth === 2) {
+      handleGetUserTasks();
+    }
+  }, [group]);
+
+
+  // users
+  const [groupUsers, setGroupUsers] = useState(null);
   const [groupUsersStatus, setGroupUsersStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
   const [groupUsersMessage, setGroupUsersMessage] = useState('');
 
@@ -114,13 +178,24 @@ function Group(props) {
     console.log(result);
 
     if (result.success) {
-      setGroupUsersStatus(2);
       setGroupUsers(result.response.Items);
+      setGroupUsersStatus(2);
     } else {
       setGroupUsersStatus(3);
       setGroupUsersMessage(result.message);
     }
   }
+
+  useEffect(() => {
+    if (group && groupAuth === 2 && !groupUsers) {
+      handleGetGroupUsers();
+    }
+  }, [group]);
+  // useEffect(() => {
+  //   if (group && groupAuth === 2 && bottomNavLinks[navigation].path === '/users' && !groupUsers) {
+  //     handleGetGroupUsers();
+  //   }
+  // }, [group, navigation]);
 
   return (
     groupAuth === 1 ? (
@@ -140,26 +215,72 @@ function Group(props) {
     : groupAuth === 2 ? (
       <div>
         <Switch>
-          <Route exact path={`groups/${groupID}`}>
-
+          <Route exact path={`/groups/${groupID}`}>
+            <div style={{display: 'flex', alignItems: 'center'}}>
+              <IconButton disabled={userTasksStatus < 2} onClick={handleGetUserTasks}>
+                <RefreshIcon/>
+              </IconButton>
+              <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `${userTasks.length} tasks in group`}</Typography>
+            </div>
+            {userTasksStatus === 1 ? 
+              <CircularProgress/>
+              : (userTasksStatus === 2 && userTasks) ?
+              <List style={{marginBottom: 30}}>
+                {userTasks.length === 0 && 'You do not have any tasks at this time.'}
+                {userTasks.map((task, index) => (
+                  <ListItem key={`user-task-${index}-${task.taskID.S}`} button component={RouterLink} to={`/groups/${groupID}/tasks/${task.taskID.S}`}>
+                    <div style={{display: 'flex', width: '100%', alignItems:'center', justifyContent: 'space-between'}}>
+                      <ListItemText 
+                        primary={task.taskName.S}
+                        secondary={`${task.taskDescription.S.length > 47 ? `${task.taskDescription.S.substring(0, 47)}...` : task.taskDescription.S}`}
+                        // style={{overflow: 'hidden'}}
+                      />
+                      <div style={{display: 'flex', justifyContent: 'flex-end', flexGrow: 1, marginLeft: 10}}>  
+                        {days.map((day) => {
+                          const included = task.taskDays.SS.includes(day);
+                          return (
+                          //task.taskDays.SS.includes(day) ? <Chip key={day} label={day} style={{margin: 2}} /> : null
+                            <div className={included ? classes.dayIncluded : classes.day}>{day[0]}</div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </ListItem>
+                ))}
+              </List>
+              : 
+              <div>
+                <p>{userTasksMessage}</p>
+              </div>
+            }
           </Route>
           <Route exact path={`/groups/${groupID}/info`}>
             <div>
               <h3>{group.groupName.S}</h3>
-              <p>{group.groupID.S}</p>
-              <h5>Your role: {group.role.S}</h5>
+              <p>Group code: {group.groupID.S}</p>
+              <p>Your role: {group.role.S}</p>
             </div>
           </Route>
           <Route exact path={`/groups/${groupID}/users`}>
-            <button onClick={handleGetGroupUsers}>get users</button>
-            <br/>
+            <div style={{display: 'flex', alignItems: 'center'}}>
+              <IconButton disabled={groupUsersStatus < 2} onClick={handleGetGroupUsers}>
+                <RefreshIcon/>
+              </IconButton>
+              <Typography variant='h6'>{groupUsersStatus === 2 && groupUsers && `${groupUsers.length} users in group`}</Typography>
+            </div>
             {groupUsersStatus === 1 ? 
               <CircularProgress/>
-              : groupUsersStatus === 2 ?
+              : groupUsersStatus === 2 && groupUsers ?
               <List>
                 {groupUsers.map((user, index) => (
                   <ListItem key={`group-user-${index}-${user.userID.S}`}>
                     <ListItemText primary={user.userName.S} secondary={user.userID.S}></ListItemText>
+                    <ListItemText secondary={user.role.S}></ListItemText>
+                    <ListItemSecondaryAction>
+                      <IconButton>
+                        <DeleteIcon/>
+                      </IconButton>
+                    </ListItemSecondaryAction>
                   </ListItem>
                 ))}
               </List>
@@ -169,15 +290,16 @@ function Group(props) {
               </div>
             }
           </Route>
-          <Route exact path={`/groups/${groupID}/tasks`}>
-
+          <Route path={`/groups/${groupID}/tasks`}>
+            <Tasks group={group} groupUsers={groupUsers}/>
           </Route>
+          <Route render={() => <Redirect to={`/groups/${groupID}`}/>}/>
         </Switch>
         <BottomNavigation 
           showLabels
           value={navigation}
           onChange={(event, newValue) => {
-            setNavigation(newValue);
+            // setNavigation(newValue);
           }}
           style={{
             width: '100%',

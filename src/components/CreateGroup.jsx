@@ -24,20 +24,20 @@ export default function CreateGroup(props) {
   return (
     <div>
       <form onSubmit={handleCreateGroup}>
-      <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            id="groupName"
-            label="Group name"
-            type="groupName"
-            name="groupName"
-            autoComplete="groupName"
-            // error={emailError}
-            value={groupName}
-            onInput={handleGroupNameChange}
-            autoFocus
-          />
+        <TextField
+          variant="outlined"
+          margin="normal"
+          required
+          id="groupName"
+          label="Group name"
+          type="groupName"
+          name="groupName"
+          autoComplete="groupName"
+          // error={emailError}
+          value={groupName}
+          onInput={handleGroupNameChange}
+          autoFocus
+        />
         <br/>
         <Button variant='contained' disableElevation color='secondary' type='submit'>Create group</Button>
       </form>

@@ -10,7 +10,7 @@ export default function JoinGroup(props) {
   const [groupCode, setGroupCode] = useState('');
 
   function handleGroupCodeChange(event) {
-    setGroupCode(event.target.value);
+    setGroupCode(event.target.value.toUpperCase());
   }
   
   async function handleJoinGroup(event){
@@ -24,20 +24,20 @@ export default function JoinGroup(props) {
   return (
     <div>
       <form onSubmit={handleJoinGroup}>
-      <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            id="groupCode"
-            label="Group code"
-            type="groupCode"
-            name="groupCode"
-            autoComplete="groupCode"
-            // error={emailError}
-            value={groupCode}
-            onInput={handleGroupCodeChange}
-            autoFocus
-          />
+        <TextField
+          variant="outlined"
+          margin="normal"
+          required
+          id="groupCode"
+          label="Group code"
+          type="groupCode"
+          name="groupCode"
+          autoComplete="groupCode"
+          // error={emailError}
+          value={groupCode}
+          onInput={handleGroupCodeChange}
+          autoFocus
+        />
         <br/>
         <Button variant='contained' disableElevation color='secondary' type='submit'>Join group</Button>
       </form>
