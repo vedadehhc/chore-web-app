@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Home() {
   const classes = useStyles();
-  
+
   // tasks
   const [userTasks, setUserTasks] = useState(null);
   const [userTasksStatus, setUserTasksStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
@@ -62,7 +62,7 @@ export default function Home() {
         <IconButton disabled={userTasksStatus < 2} onClick={handleGetUserTasks}>
           <RefreshIcon />
         </IconButton>
-        <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `${userTasks.length} tasks in group`}</Typography>
+        <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `You have ${userTasks.length} tasks`}</Typography>
       </div>
       {userTasksStatus === 1 ?
         <CircularProgress />

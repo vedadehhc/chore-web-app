@@ -1,4 +1,5 @@
-import  { PutItemCommand, GetItemCommand, UpdateItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import  { PutItemCommand, GetItemCommand, UpdateItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
+
 import { getNewDynamoClient } from './dynamo';
 import parseJwt from './parseJwt';
 
@@ -99,6 +100,7 @@ export async function createGroup(groupName) {
         'groupName': {S: groupName},
         'numUsers': {N : '1'},
         'ownerID': {S: ownerID},
+        'ownerName': {S: ownerName},
         'users': {SS: [ownerID]},
       },
     };
@@ -248,4 +250,71 @@ export async function listUsersInGroup(groupID){
   } catch (err) {
     return {success: false, message: err.message};
   }
+}
+
+// if no userID provided, use current user
+export async function removeUserFromGroup(group, user) {
+  const client = await getNewDynamoClient();
+  if(!client.success) {
+    return {success: false, message: client.message};
+  }
+
+  const dynamoClient = client.dynamoClient;
+  let userID;
+
+  if(!user) {
+    userID = parseJwt(client.tokens.idToken)['cognito:username'];
+    if (group.role.S === 'owner') {
+      return {success: false, message: 'owner cannot leave group, delete instead'};
+    }
+  } else {
+    userID = user.userID.S;
+    if (group.role.S !== 'owner') {
+      return {success: false, message: 'insufficient permissions'};
+    } else if (user.role.S === 'owner') {
+      return {success: false, message: 'owner cannot leave group, delete instead'};
+    }
+  }
+
+  const groupID = group.groupID.S;
+
+  try {
+    const deleteParams = {
+      TableName: 'chore-web-app-usergroups',
+      Key: {
+        'userID': {S: userID},
+        'groupID': {S: groupID},
+      },
+    };
+
+    const response = await dynamoClient.send(new DeleteItemCommand(deleteParams));
+
+    const updateGroupParams = {
+      TableName: 'chore-web-app-groups',
+      Key: {
+        groupID: {'S': groupID},
+      },
+      ConditionExpression: 'attribute_exists(#u) AND contains(#u, :userID)',
+      UpdateExpression: 'ADD numUsers :one DELETE #u :userIDSet',
+      ExpressionAttributeNames: {
+        '#u':'users',
+      },
+      ExpressionAttributeValues: {
+        ':userID': {S: userID},
+        ':userIDSet': {SS: [userID]},
+        ':one': {N: '-1'},
+      },
+    };
+
+    const response2 = await dynamoClient.send(new UpdateItemCommand(updateGroupParams));
+
+    return {success: true, response, response2};
+  } catch (err) {
+    return {success: false, message: err.message};
+  }
+}
+
+// TODO: add func
+export async function deleteGroup(group) {
+  return {success: false, message: 'cannot delete groups at this time'};
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const mobileThreshold = 600;
+const mobileThreshold = 800;
 
 export default function useCheckMobile() {
   const [windowDimension, setWindowDimension] = useState(null);

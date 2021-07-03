@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect } from "react-router-dom";
+import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect, useHistory } from "react-router-dom";
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -12,16 +12,18 @@ import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import GroupIcon from '@material-ui/icons/Group';
 import InfoIcon from '@material-ui/icons/Info';
 import DeleteIcon from '@material-ui/icons/Delete';
 import RefreshIcon from '@material-ui/icons/Refresh';
+import SettingsIcon from '@material-ui/icons/Settings';
 
 import Tasks from './Tasks';
 
-import { listUsersInGroup } from "../utils/groups";
+import { deleteGroup, listUsersInGroup, removeUserFromGroup } from "../utils/groups";
 import useCheckMobile from "../utils/useCheckMobile";
 import { listUserGroupTasks } from "../utils/tasks";
 
@@ -60,8 +62,8 @@ const bottomNavLinks = [
   },
   {
     path: '/tasks',
-    label: 'Manage tasks',
-    icon: <AssignmentIcon/>,
+    label: 'Manage',
+    icon: <SettingsIcon/>,
     adminOnly: true,
   }
 ];
@@ -82,8 +84,9 @@ function Group(props) {
   const isMobile = useCheckMobile();
   const location = useLocation();
   const classes = useStyles();
+  const history = useHistory();
 
-  const { groups, groupsStatus } = props;
+  const { groups, groupsStatus, handleLoadGroups } = props;
 
   // navigation
   const [navigation, setNavigation] = useState(0);
@@ -187,15 +190,65 @@ function Group(props) {
   }
 
   useEffect(() => {
-    if (group && groupAuth === 2 && !groupUsers) {
+    if (group && groupAuth === 2) {
       handleGetGroupUsers();
     }
-  }, [group]);
+  }, [group, groupAuth]);
   // useEffect(() => {
   //   if (group && groupAuth === 2 && bottomNavLinks[navigation].path === '/users' && !groupUsers) {
   //     handleGetGroupUsers();
   //   }
   // }, [group, navigation]);
+
+  // delete user
+  const [deleteUserID, setDeleteUserID] = useState('');
+  const [deleteUserStatus, setDeleteUserStatus] = useState(0);
+  const [deleteUserMessage, setDeleteUserMessage] = useState('');
+
+  async function handleRemoveUser(user) {
+    setDeleteUserStatus(1);
+    if(user) {
+      setDeleteUserID(user.userID.S);
+    }
+
+    const result = await removeUserFromGroup(group, user);
+    console.log(result);
+
+    if(user) {
+      setDeleteUserID('');
+    }
+
+    if(result.success) {
+      if(user) { 
+        setDeleteUserStatus(2);
+        handleGetGroupUsers();
+      } else {
+        await handleLoadGroups();
+        setDeleteUserStatus(2);
+        history.push('/groups');
+      }
+    } else {
+      setDeleteUserStatus(3);
+      setDeleteUserMessage(result.message);
+    }
+  }
+
+  // delete group, TODO - add func
+  const [deleteGroupStatus, setDeleteGroupStatus] = useState(0);
+  const [deleteGroupMessage, setDeleteGroupMessage] = useState('');
+
+  async function handleDeleteGroup() {
+    setDeleteGroupStatus(1);
+
+    const result = await deleteGroup(group);
+
+    if(result.success) {
+      setDeleteGroupStatus(2);
+    } else {
+      setDeleteGroupStatus(3);
+      setDeleteGroupMessage(result.message);
+    }
+  }
 
   return (
     groupAuth === 1 ? (
@@ -213,14 +266,14 @@ function Group(props) {
       </Grid>
     )
     : groupAuth === 2 ? (
-      <div>
+      <React.Fragment>
         <Switch>
           <Route exact path={`/groups/${groupID}`}>
             <div style={{display: 'flex', alignItems: 'center'}}>
               <IconButton disabled={userTasksStatus < 2} onClick={handleGetUserTasks}>
                 <RefreshIcon/>
               </IconButton>
-              <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `${userTasks.length} tasks in group`}</Typography>
+              <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `You have ${userTasks.length} tasks in this group`}</Typography>
             </div>
             {userTasksStatus === 1 ? 
               <CircularProgress/>
@@ -228,7 +281,12 @@ function Group(props) {
               <List style={{marginBottom: 30}}>
                 {userTasks.length === 0 && 'You do not have any tasks at this time.'}
                 {userTasks.map((task, index) => (
-                  <ListItem key={`user-task-${index}-${task.taskID.S}`} button component={RouterLink} to={`/groups/${groupID}/tasks/${task.taskID.S}`}>
+                  <ListItem 
+                    key={`user-task-${index}-${task.taskID.S}`}
+                    button
+                    component={RouterLink}
+                    to={`/groups/${groupID}/tasks/${task.taskID.S}`}
+                  >
                     <div style={{display: 'flex', width: '100%', alignItems:'center', justifyContent: 'space-between'}}>
                       <ListItemText 
                         primary={task.taskName.S}
@@ -259,6 +317,18 @@ function Group(props) {
               <h3>{group.groupName.S}</h3>
               <p>Group code: {group.groupID.S}</p>
               <p>Your role: {group.role.S}</p>
+              {group.role.S === 'owner' ? 
+                <Button variant='outlined' style={{color: '#f44336', borderColor: '#f44336'}} onClick={handleDeleteGroup}>
+                  Delete group
+                </Button>
+                :
+                <Button variant='outlined' style={{color: '#f44336', borderColor: '#f44336'}} onClick={() => handleRemoveUser()}>
+                  {deleteUserStatus === 1 ?
+                    <CircularProgress size={24}/>
+                    : 'Leave group'
+                  }
+                </Button>
+              }
             </div>
           </Route>
           <Route exact path={`/groups/${groupID}/users`}>
@@ -276,10 +346,15 @@ function Group(props) {
                   <ListItem key={`group-user-${index}-${user.userID.S}`}>
                     <ListItemText primary={user.userName.S} secondary={user.userID.S}></ListItemText>
                     <ListItemText secondary={user.role.S}></ListItemText>
+
                     <ListItemSecondaryAction>
-                      <IconButton>
-                        <DeleteIcon/>
-                      </IconButton>
+                      {group.role.S === 'owner' && user.role.S !== 'owner' && (
+                        deleteUserStatus === 1 && deleteUserID === user.userID.S ? 
+                          <CircularProgress size={24}/>
+                        : <IconButton edge='end' onClick={() => handleRemoveUser(user)} disabled={deleteUserStatus === 1}>
+                            <DeleteIcon/>
+                          </IconButton>
+                      )}
                     </ListItemSecondaryAction>
                   </ListItem>
                 ))}
@@ -302,26 +377,31 @@ function Group(props) {
             // setNavigation(newValue);
           }}
           style={{
-            width: '100%',
             position: 'fixed',
             bottom: 0,
-            left: isMobile ? 0 : '10rem',
+            left: isMobile ? 0 : '20rem',
             right: 0,
             backgroundColor: '#e0e0e0'
           }}
         >
-          {bottomNavLinks.map((nav, index) => (
-            <BottomNavigationAction 
-              key={`bottom-nav-${index}`}
-              label={nav.label}
-              icon={nav.icon}
-              component={RouterLink}
-              to={`/groups/${groupID}${nav.path}`}
-              style={{textDecoration: 'none'}}
-            />
-          ))}
+          {bottomNavLinks.map((nav, index) => {
+            if(group.role.S === 'owner' || !nav.adminOnly) {
+              return (
+                <BottomNavigationAction 
+                  key={`bottom-nav-${index}`}
+                  label={nav.label}
+                  icon={nav.icon}
+                  component={RouterLink}
+                  to={`/groups/${groupID}${nav.path}`}
+                  style={{textDecoration: 'none'}}
+                />
+              );
+            } else {
+              return null;
+            }
+          })}
         </BottomNavigation>
-      </div>
+      </React.Fragment>
     )
     : (
       <div>

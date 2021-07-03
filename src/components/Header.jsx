@@ -187,7 +187,7 @@ export default function Header(props) {
           >
             <CloseIcon />
           </Button>*/}
-          <List>
+          <List style={{overflow:'auto'}}>
             {navLinks.map((text, index) => (
               <ListItem button key={`navlink-${index}`} component={RouterLink} to={text[1]}
                 onClick={() => setDrawerOpen(false)}
@@ -197,15 +197,12 @@ export default function Header(props) {
                 <ListItemText primary={text[0]}/>
               </ListItem>
             ))}
-          </List>
-          <Divider/>
-          <List style={{overflow:'auto'}} subheader={
+            <Divider/>
             <ListSubheader disableSticky>
               <Typography variant='h6' style={{marginTop: '1rem',marginBottom: '.5rem'}}>
                 Your groups
               </Typography>
             </ListSubheader>
-          }>
             {groupsStatus === 1 && 
               <Grid
                 container
