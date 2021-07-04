@@ -3,12 +3,9 @@ import { Route, Switch, useParams, Link as RouterLink, useRouteMatch, Redirect, 
 
 import { makeStyles } from "@material-ui/core";
 import List from '@material-ui/core/List';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import Backdrop from '@material-ui/core/Backdrop';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -466,14 +463,17 @@ function Task(props) {
     ) 
     : taskStatus === 2 && task ? (
       <div>
-        <h3>{task.taskName.S}</h3>
-        <div className={classes.chips}>
+        <Typography variant='h4'>{task.taskName.S}</Typography>
+        <Typography variant='h6'>Group: {group.groupName.S} <span style={{color: '#888'}}>({task.groupID.S})</span></Typography>
+        <Typography variant='h6'>Assigned to: {task.userName.S} <span style={{color: '#888'}}>({task.userID.S})</span></Typography>
+        <div className={classes.chips} style={{marginTop:5, marginBottom: 15}}>
           {days.map((value) => (
             task.taskDays.SS.includes(value) && <Chip key={value} label={value} className={classes.chip} />
           ))}
         </div>
-        <br/>
-        <p>{task.taskDescription.S}</p>
+        <Typography variant='body1'>
+          {task.taskDescription.S}
+        </Typography>
       </div>
     )
     : (

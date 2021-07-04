@@ -69,6 +69,7 @@ export async function listUserGroupTasks(groupID, userID) {
 }
 
 // get all tasks in a group - use gsi
+// TODO - modify gsi to use less attributes
 export async function listGroupTasks(group) {
 
   if (!group) {

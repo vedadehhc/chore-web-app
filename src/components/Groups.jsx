@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect, useHistory } from "react-router-dom";
+import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect, useHistory, useRouteMatch } from "react-router-dom";
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -164,10 +164,10 @@ function Group(props) {
     }
   }
   useEffect(() => {
-    if (group && groupAuth === 2) {
+    if (group && groupAuth === 2 && location.pathname === `/groups/${group.groupID.S}`) {
       handleGetUserTasks();
     }
-  }, [group]);
+  }, [group, groupAuth, location]);
 
 
   // users
@@ -194,6 +194,13 @@ function Group(props) {
       handleGetGroupUsers();
     }
   }, [group, groupAuth]);
+
+  useEffect(() => {
+    if (group && groupAuth === 2 && location.pathname === `/groups/${group.groupID.S}/users`) {
+      handleGetGroupUsers();
+    }
+  }, [group, groupAuth, location]);
+  
   // useEffect(() => {
   //   if (group && groupAuth === 2 && bottomNavLinks[navigation].path === '/users' && !groupUsers) {
   //     handleGetGroupUsers();
@@ -241,9 +248,12 @@ function Group(props) {
     setDeleteGroupStatus(1);
 
     const result = await deleteGroup(group);
+    console.log(result);
 
     if(result.success) {
+      await handleLoadGroups();
       setDeleteGroupStatus(2);
+      history.push('/groups');
     } else {
       setDeleteGroupStatus(3);
       setDeleteGroupMessage(result.message);

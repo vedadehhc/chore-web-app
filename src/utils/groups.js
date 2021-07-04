@@ -2,6 +2,7 @@ import  { PutItemCommand, GetItemCommand, UpdateItemCommand, QueryCommand, Delet
 
 import { getNewDynamoClient } from './dynamo';
 import parseJwt from './parseJwt';
+import { listGroupTasks, listUserGroupTasks, listUserTasks } from './tasks';
 
 
 // generates a group id using only numbers and upper case letters 
@@ -252,7 +253,6 @@ export async function listUsersInGroup(groupID){
   }
 }
 
-// if no userID provided, use current user
 export async function removeUserFromGroup(group, user) {
   const client = await getNewDynamoClient();
   if(!client.success) {
@@ -278,6 +278,12 @@ export async function removeUserFromGroup(group, user) {
 
   const groupID = group.groupID.S;
 
+  const getTasks = await listUserGroupTasks(groupID, userID);
+  if(!getTasks.success) {
+    return {success: false, message: getTasks.message};
+  }
+  const tasks = getTasks.response.Items;
+
   try {
     const deleteParams = {
       TableName: 'chore-web-app-usergroups',
@@ -288,6 +294,19 @@ export async function removeUserFromGroup(group, user) {
     };
 
     const response = await dynamoClient.send(new DeleteItemCommand(deleteParams));
+
+    const taskResponses = [];
+    for (const task of tasks) {
+      const deleteTaskParams = {
+        TableName: 'chore-web-app-tasks',
+        Key: {
+          'userID': {S : userID},
+          'groupID#taskID': {S: task['groupID#taskID'].S},
+        },
+      };
+      const taskResponse = await dynamoClient.send(new DeleteItemCommand(deleteTaskParams));
+      taskResponses.push(taskResponse);
+    }
 
     const updateGroupParams = {
       TableName: 'chore-web-app-groups',
@@ -308,13 +327,79 @@ export async function removeUserFromGroup(group, user) {
 
     const response2 = await dynamoClient.send(new UpdateItemCommand(updateGroupParams));
 
-    return {success: true, response, response2};
+    return {success: true, response, response2, taskResponses};
   } catch (err) {
     return {success: false, message: err.message};
   }
 }
 
-// TODO: add func
+
 export async function deleteGroup(group) {
-  return {success: false, message: 'cannot delete groups at this time'};
+  const client = await getNewDynamoClient();
+  if(!client.success) {
+    return {success: false, message: client.message};
+  }
+
+  const dynamoClient = client.dynamoClient;
+
+  if(group.role.S !== 'owner') {
+    return {success: false, message: 'insufficient permissions'};
+  }
+  const groupID = group.groupID.S;
+
+  const userID = parseJwt(client.tokens.idToken)['cognito:username'];
+
+  const getTasks = await listGroupTasks(group);
+  if(!getTasks.success) {
+    return {success: false, message: getTasks.message};
+  }
+  const tasks = getTasks.response.Items;
+
+  try {
+    const deleteGroupParams = {
+      TableName: 'chore-web-app-groups',
+      Key: {
+        groupID: {S: groupID},
+      },
+      ConditionExpression: 'ownerID = :user',
+      ExpressionAttributeValues: {
+        ':user': {'S' : userID},
+      },
+      ReturnValues: 'ALL_OLD',
+    };
+
+    const response = await dynamoClient.send(new DeleteItemCommand(deleteGroupParams));
+    const users = response.Attributes.users.SS;
+
+    const userResponses = [];
+    for (const user of users) {
+      const deleteUserGroupParams = {
+        TableName: 'chore-web-app-usergroups',
+        Key: {
+          'userID': {S: user},
+          'groupID': {S: groupID},
+        },
+      };
+
+      const userResponse = await dynamoClient.send(new DeleteItemCommand(deleteUserGroupParams));
+      userResponses.push(userResponse);
+    }
+
+    const taskResponses = [];
+    for (const task of tasks) {
+      const deleteTaskParams = {
+        TableName: 'chore-web-app-tasks',
+        Key: {
+          'userID': {S : task.userID.S},
+          'groupID#taskID': {S: task['groupID#taskID'].S},
+        },
+      };
+      const taskResponse = await dynamoClient.send(new DeleteItemCommand(deleteTaskParams));
+      taskResponses.push(taskResponse);
+    }
+
+    return {success: true, response, userResponses, taskResponses};
+  } catch (err) {
+    return {success: false, message: err.message};
+  }
 }
