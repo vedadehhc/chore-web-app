@@ -12,6 +12,7 @@ import Typography from '@material-ui/core/Typography';
 import RefreshIcon from '@material-ui/icons/Refresh';
 
 import { listUserTasks } from '../utils/tasks';
+import useApi from '../utils/useApi';
 
 const useStyles = makeStyles((theme) => ({
   day: {
@@ -24,42 +25,45 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const days = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday'
+];
+
 export default function Home() {
   const classes = useStyles();
 
   // tasks
-  const [userTasks, setUserTasks] = useState(null);
-  const [userTasksStatus, setUserTasksStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
-  const [userTasksMessage, setUserTasksMessage] = useState('');
-  const days = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-  ];
-
-  async function handleGetUserTasks() {
-    setUserTasksStatus(1);
-    const result = await listUserTasks();
-    console.log(result);
-
-    if(result.success) {
-      setUserTasks(result.response.Items);
-      setUserTasksStatus(2);
-    } else {
-      setUserTasksStatus(3);
-      setUserTasksMessage(result.message);
-    }
-  }
+  const [handleGetUserTasks, userTasks, userTasksStatus, userTasksMessage] = useApi(listUserTasks);
   useEffect(() => handleGetUserTasks(), []);
+  
+  // const [userTasks, setUserTasks] = useState(null);
+  // const [userTasksStatus, setUserTasksStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
+  // const [userTasksMessage, setUserTasksMessage] = useState('');
+
+  // async function handleGetUserTasks() {
+  //   setUserTasksStatus(1);
+  //   const result = await listUserTasks();
+  //   console.log(result);
+
+  //   if(result.success) {
+  //     setUserTasks(result.response.Items);
+  //     setUserTasksStatus(2);
+  //   } else {
+  //     setUserTasksStatus(3);
+  //     setUserTasksMessage(result.message);
+  //   }
+  // }
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <IconButton disabled={userTasksStatus < 2} onClick={handleGetUserTasks}>
+        <IconButton disabled={userTasksStatus < 2} onClick={() => handleGetUserTasks()}>
           <RefreshIcon />
         </IconButton>
         <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `You have ${userTasks.length} tasks`}</Typography>

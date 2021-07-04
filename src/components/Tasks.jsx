@@ -27,6 +27,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
 
 import { createTask, deleteTask, getTask, listGroupTasks } from "../utils/tasks";
+import useApi from "../utils/useApi";
 
 
 const useStyles = makeStyles((theme) =>  ({
@@ -79,25 +80,27 @@ export default function Tasks(props) {
   const { path, url } = useRouteMatch();
 
   // list all tasks
-  const [tasks, setTasks] = useState(null);
-  const [tasksStatus, setTasksStatus] = useState(0);
-  const [tasksMessage, setTasksMessage] = useState('');
   const [filterUser, setFilterUser] = useState('');
+  const [handleGetTasks, tasks, tasksStatus, tasksMessage] = useApi(listGroupTasks, () => [group]);
 
-  async function handleGetTasks() {
-    setTasksStatus(1);
+  // const [tasks, setTasks] = useState(null);
+  // const [tasksStatus, setTasksStatus] = useState(0);
+  // const [tasksMessage, setTasksMessage] = useState('');
 
-    const result = await listGroupTasks(group);
-    console.log(result);
+  // async function handleGetTasks() {
+  //   setTasksStatus(1);
 
-    if (result.success) {
-      setTasksStatus(2);
-      setTasks(result.response.Items);
-    } else {
-      setTasksStatus(3);
-      setTasksMessage(result.message);
-    }
-  }
+  //   const result = await listGroupTasks(group);
+  //   console.log(result);
+
+  //   if (result.success) {
+  //     setTasksStatus(2);
+  //     setTasks(result.response.Items);
+  //   } else {
+  //     setTasksStatus(3);
+  //     setTasksMessage(result.message);
+  //   }
+  // }
 
   useEffect(() => {
     if (group && group.role.S === 'owner' && path ===`/groups/${group.groupID.S}/tasks`) {
@@ -116,46 +119,67 @@ export default function Tasks(props) {
     setShowCreateTask(false);
   }
 
-  const [createTaskStatus, setCreateTaskStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
-  const [createTaskMessage, setCreateTaskMessage] = useState(''); 
-
-  async function handleCreateTask(event) {
-    event.preventDefault();
-    setCreateTaskStatus(1);
-
-    const result = await createTask(group, assignedUser, taskName, taskDescription, selectedDays);
-    console.log(result);
-
-    if(result.success) {
-      setCreateTaskStatus(2);
-      setCreateTaskMessage('Task created successfully!');
-    } else {
-      setCreateTaskStatus(3);
-      setCreateTaskMessage(result.message);
+  // TODO: add success message
+  const [handleCreateTask, , createTaskStatus, createTaskMessage] = useApi(
+    createTask, 
+    () => [group, assignedUser, taskName, taskDescription, selectedDays],
+    (e) => {
+      e.preventDefault();
     }
-  }
+  );
+  // const [createTaskStatus, setCreateTaskStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
+  // const [createTaskMessage, setCreateTaskMessage] = useState(''); 
+
+  // async function handleCreateTask(event) {
+  //   event.preventDefault();
+  //   setCreateTaskStatus(1);
+
+  //   const result = await createTask(group, assignedUser, taskName, taskDescription, selectedDays);
+  //   console.log(result);
+
+  //   if(result.success) {
+  //     setCreateTaskStatus(2);
+  //     setCreateTaskMessage('Task created successfully!');
+  //   } else {
+  //     setCreateTaskStatus(3);
+  //     setCreateTaskMessage(result.message);
+  //   }
+  // }
 
   // delete task
   const [deleteTaskID, setDeleteTaskID] = useState('');
-  const [deleteTaskStatus, setDeleteTaskStatus] = useState(0);
-  const [deleteTaskMessage, setDeleteTaskMessage] = useState('');
 
-  async function handleDeleteTask(task) {
-    setDeleteTaskStatus(1);
-    setDeleteTaskID(task.taskID.S);
+  const [handleDeleteTask, , deleteTaskStatus, deleteTaskMessage] = useApi(
+    deleteTask, 
+    () => [group],
+    (userID, taskID) => {
+      setDeleteTaskID(taskID);
+    },
+    (userID, taskID) => {
+      setDeleteTaskID('');
+    },
+    () => handleGetTasks()
+  );
 
-    const result = await deleteTask(task.userID.S, group, task.taskID.S);
-    console.log(result);
-    setDeleteTaskID('');
+  // const [deleteTaskStatus, setDeleteTaskStatus] = useState(0);
+  // const [deleteTaskMessage, setDeleteTaskMessage] = useState('');
 
-    if(result.success) {
-      setDeleteTaskStatus(2);
-      handleGetTasks();
-    } else {
-      setDeleteTaskStatus(3);
-      setDeleteTaskMessage(result.message);
-    }
-  }
+  // async function handleDeleteTask(task) {
+  //   setDeleteTaskStatus(1);
+  //   setDeleteTaskID(task.taskID.S);
+
+  //   const result = await deleteTask(task.userID.S, group, task.taskID.S);
+  //   console.log(result);
+  //   setDeleteTaskID('');
+
+  //   if(result.success) {
+  //     setDeleteTaskStatus(2);
+  //     handleGetTasks();
+  //   } else {
+  //     setDeleteTaskStatus(3);
+  //     setDeleteTaskMessage(result.message);
+  //   }
+  // }
 
   return (
     group ?
@@ -166,7 +190,7 @@ export default function Tasks(props) {
             <h3>All group tasks ({tasksStatus === 2 && tasks && tasks.length})</h3>
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#eee', paddingLeft: 5, paddingRight: 10}}>
               <div style={{display: 'flex', alignItems: 'center', height:'100%'}}>
-                <IconButton disabled={tasksStatus < 2} onClick={handleGetTasks}>
+                <IconButton disabled={tasksStatus < 2} onClick={() => handleGetTasks()}>
                   <RefreshIcon/>
                 </IconButton>
                 <IconButton onClick={()=>setShowCreateTask(true)}>
@@ -274,7 +298,7 @@ export default function Tasks(props) {
                           {
                             deleteTaskStatus === 1 && deleteTaskID === task.taskID.S ?
                               <CircularProgress size={24}/>
-                            : <IconButton edge='end' onClick={() => handleDeleteTask(task)} disabled={deleteTaskStatus===1}>
+                            : <IconButton edge='end' onClick={() => handleDeleteTask([task.userID.S], [task.taskID.S])} disabled={deleteTaskStatus===1}>
                                 <DeleteIcon/>
                               </IconButton>
                           }
@@ -306,7 +330,7 @@ export default function Tasks(props) {
                   </IconButton>
                 </div>
                 <Typography variant='h5'>Create task</Typography>
-                <form onSubmit={handleCreateTask}>
+                <form onSubmit={(e) => handleCreateTask([],[e])}>
                   <TextField
                     variant="outlined"
                     margin="normal"
@@ -420,29 +444,27 @@ function Task(props) {
   const location = useLocation();
   const classes = useStyles();
 
-  const [task, setTask] = useState(null);
-  const [taskStatus, setTaskStatus] = useState(0);
-  const [taskMessage, setTaskMessage] = useState('');
+  // get task
+  const [handleGetTask, task, taskStatus, taskMessage] = useApi(getTask, () => [group, taskID]);
 
-  async function handleGetTask() {
-    setTaskStatus(1);
+  // const [task, setTask] = useState(null);
+  // const [taskStatus, setTaskStatus] = useState(0);
+  // const [taskMessage, setTaskMessage] = useState('');
 
-    let userID = null;
-    if (location.state && location.state.userID) {
-      userID = location.state.userID;
-    }
+  // async function handleGetTask() {
+  //   setTaskStatus(1);
 
-    const result = await getTask(group.groupID.S, taskID, userID);
-    console.log(result);
+  //   const result = await getTask(group, taskID);
+  //   console.log(result);
 
-    if(result.success) {
-      setTaskStatus(2);
-      setTask(result.response.Item);
-    } else {
-      setTaskStatus(3);
-      setTaskMessage(result.message);
-    }
-  }
+  //   if(result.success) {
+  //     setTaskStatus(2);
+  //     setTask(result.response);
+  //   } else {
+  //     setTaskStatus(3);
+  //     setTaskMessage(result.message);
+  //   }
+  // }
 
   useEffect(() => handleGetTask(), [taskID, group, location]);
 

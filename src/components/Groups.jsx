@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect, useHistory, useRouteMatch } from "react-router-dom";
+import { Route, Switch, useParams, Link as RouterLink, useLocation, Redirect, useHistory } from "react-router-dom";
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -26,6 +26,7 @@ import Tasks from './Tasks';
 import { deleteGroup, listUsersInGroup, removeUserFromGroup } from "../utils/groups";
 import useCheckMobile from "../utils/useCheckMobile";
 import { listUserGroupTasks } from "../utils/tasks";
+import useApi from "../utils/useApi";
 
 export default function Groups(props) {
   return (
@@ -78,6 +79,16 @@ const useStyles = makeStyles((theme) => ({
     color: '#000',
   },
 }));
+
+const days = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday'
+];
 
 function Group(props) {
   const { groupID } = useParams();
@@ -137,57 +148,53 @@ function Group(props) {
 
 
   // tasks
-  const [userTasks, setUserTasks] = useState(null);
-  const [userTasksStatus, setUserTasksStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
-  const [userTasksMessage, setUserTasksMessage] = useState('');
-  const days = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-  ];
+  const [handleGetUserTasks, userTasks, userTasksStatus, userTasksMessage] = useApi(listUserGroupTasks, () => [group.groupID.S]);
 
-  async function handleGetUserTasks() {
-    setUserTasksStatus(1);
-    const result = await listUserGroupTasks(group.groupID.S);
-    console.log(result);
-
-    if(result.success) {
-      setUserTasks(result.response.Items);
-      setUserTasksStatus(2);
-    } else {
-      setUserTasksStatus(3);
-      setUserTasksMessage(result.message);
-    }
-  }
   useEffect(() => {
     if (group && groupAuth === 2 && location.pathname === `/groups/${group.groupID.S}`) {
       handleGetUserTasks();
     }
   }, [group, groupAuth, location]);
+  
+  // const [userTasks, setUserTasks] = useState(null);
+  // const [userTasksStatus, setUserTasksStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
+  // const [userTasksMessage, setUserTasksMessage] = useState('');
+
+  // async function handleGetUserTasks() {
+  //   setUserTasksStatus(1);
+  //   const result = await listUserGroupTasks(group.groupID.S);
+  //   console.log(result);
+
+  //   if(result.success) {
+  //     setUserTasks(result.response.Items);
+  //     setUserTasksStatus(2);
+  //   } else {
+  //     setUserTasksStatus(3);
+  //     setUserTasksMessage(result.message);
+  //   }
+  // }
 
 
   // users
-  const [groupUsers, setGroupUsers] = useState(null);
-  const [groupUsersStatus, setGroupUsersStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
-  const [groupUsersMessage, setGroupUsersMessage] = useState('');
+  const [handleGetGroupUsers, groupUsers, groupUsersStatus, groupUsersMessage] = useApi(listUsersInGroup, () => [group.groupID.S]);
 
-  async function handleGetGroupUsers() {
-    setGroupUsersStatus(1);
-    const result = await listUsersInGroup(group.groupID.S);
-    console.log(result);
+  // const [groupUsers, setGroupUsers] = useState(null);
+  // const [groupUsersStatus, setGroupUsersStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
+  // const [groupUsersMessage, setGroupUsersMessage] = useState('');
 
-    if (result.success) {
-      setGroupUsers(result.response.Items);
-      setGroupUsersStatus(2);
-    } else {
-      setGroupUsersStatus(3);
-      setGroupUsersMessage(result.message);
-    }
-  }
+  // async function handleGetGroupUsers() {
+  //   setGroupUsersStatus(1);
+  //   const result = await listUsersInGroup(group.groupID.S);
+  //   console.log(result);
+
+  //   if (result.success) {
+  //     setGroupUsers(result.response.Items);
+  //     setGroupUsersStatus(2);
+  //   } else {
+  //     setGroupUsersStatus(3);
+  //     setGroupUsersMessage(result.message);
+  //   }
+  // }
 
   useEffect(() => {
     if (group && groupAuth === 2) {
@@ -208,57 +215,92 @@ function Group(props) {
   // }, [group, navigation]);
 
   // delete user
+
   const [deleteUserID, setDeleteUserID] = useState('');
-  const [deleteUserStatus, setDeleteUserStatus] = useState(0);
-  const [deleteUserMessage, setDeleteUserMessage] = useState('');
-
-  async function handleRemoveUser(user) {
-    setDeleteUserStatus(1);
-    if(user) {
-      setDeleteUserID(user.userID.S);
-    }
-
-    const result = await removeUserFromGroup(group, user);
-    console.log(result);
-
-    if(user) {
-      setDeleteUserID('');
-    }
-
-    if(result.success) {
-      if(user) { 
-        setDeleteUserStatus(2);
+  const [handleRemoveUser, , deleteUserStatus, deleteUserMessage] = useApi(
+    removeUserFromGroup, 
+    ()=>[group],
+    (user) => {
+      if(user) {
+        setDeleteUserID(user.userID.S);
+      }
+    },
+    (user) => {
+      if(user) {
+        setDeleteUserID('');
+      }
+    },
+    async (user) => {
+      if(user) {
         handleGetGroupUsers();
       } else {
         await handleLoadGroups();
-        setDeleteUserStatus(2);
         history.push('/groups');
       }
-    } else {
-      setDeleteUserStatus(3);
-      setDeleteUserMessage(result.message);
     }
-  }
+  );
 
-  // delete group, TODO - add func
-  const [deleteGroupStatus, setDeleteGroupStatus] = useState(0);
-  const [deleteGroupMessage, setDeleteGroupMessage] = useState('');
+  // const [deleteUserStatus, setDeleteUserStatus] = useState(0);
+  // const [deleteUserMessage, setDeleteUserMessage] = useState('');
 
-  async function handleDeleteGroup() {
-    setDeleteGroupStatus(1);
+  // async function handleRemoveUser(user) {
+  //   setDeleteUserStatus(1);
+  //   if(user) {
+  //     setDeleteUserID(user.userID.S);
+  //   }
 
-    const result = await deleteGroup(group);
-    console.log(result);
+  //   const result = await removeUserFromGroup(group, user);
+  //   console.log(result);
 
-    if(result.success) {
+  //   if(user) {
+  //     setDeleteUserID('');
+  //   }
+
+  //   if(result.success) {
+  //     if(user) { 
+  //       setDeleteUserStatus(2);
+  //       handleGetGroupUsers();
+  //     } else {
+  //       await handleLoadGroups();
+  //       setDeleteUserStatus(2);
+  //       history.push('/groups');
+  //     }
+  //   } else {
+  //     setDeleteUserStatus(3);
+  //     setDeleteUserMessage(result.message);
+  //   }
+  // }
+
+  // delete group
+  const [handleDeleteGroup, , deleteGroupStatus, deleteGroupMessage] = useApi(
+    deleteGroup, 
+    () => [group],
+    null,
+    null,
+    async () => {
       await handleLoadGroups();
-      setDeleteGroupStatus(2);
       history.push('/groups');
-    } else {
-      setDeleteGroupStatus(3);
-      setDeleteGroupMessage(result.message);
     }
-  }
+  );
+
+  // const [deleteGroupStatus, setDeleteGroupStatus] = useState(0);
+  // const [deleteGroupMessage, setDeleteGroupMessage] = useState('');
+
+  // async function handleDeleteGroup() {
+  //   setDeleteGroupStatus(1);
+
+  //   const result = await deleteGroup(group);
+  //   console.log(result);
+
+  //   if(result.success) {
+  //     await handleLoadGroups();
+  //     setDeleteGroupStatus(2);
+  //     history.push('/groups');
+  //   } else {
+  //     setDeleteGroupStatus(3);
+  //     setDeleteGroupMessage(result.message);
+  //   }
+  // }
 
   return (
     groupAuth === 1 ? (
@@ -328,7 +370,7 @@ function Group(props) {
               <p>Group code: {group.groupID.S}</p>
               <p>Your role: {group.role.S}</p>
               {group.role.S === 'owner' ? 
-                <Button variant='outlined' style={{color: '#f44336', borderColor: '#f44336'}} onClick={handleDeleteGroup}>
+                <Button variant='outlined' style={{color: '#f44336', borderColor: '#f44336'}} onClick={() => handleDeleteGroup()}>
                   Delete group
                 </Button>
                 :
@@ -343,7 +385,7 @@ function Group(props) {
           </Route>
           <Route exact path={`/groups/${groupID}/users`}>
             <div style={{display: 'flex', alignItems: 'center'}}>
-              <IconButton disabled={groupUsersStatus < 2} onClick={handleGetGroupUsers}>
+              <IconButton disabled={groupUsersStatus < 2} onClick={() => handleGetGroupUsers()}>
                 <RefreshIcon/>
               </IconButton>
               <Typography variant='h6'>{groupUsersStatus === 2 && groupUsers && `${groupUsers.length} users in group`}</Typography>
@@ -361,7 +403,7 @@ function Group(props) {
                       {group.role.S === 'owner' && user.role.S !== 'owner' && (
                         deleteUserStatus === 1 && deleteUserID === user.userID.S ? 
                           <CircularProgress size={24}/>
-                        : <IconButton edge='end' onClick={() => handleRemoveUser(user)} disabled={deleteUserStatus === 1}>
+                        : <IconButton edge='end' onClick={() => handleRemoveUser([], [user])} disabled={deleteUserStatus === 1}>
                             <DeleteIcon/>
                           </IconButton>
                       )}

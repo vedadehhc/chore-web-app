@@ -8,6 +8,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 
 import { getValidTokens } from '../utils/auth';
 import { listGroups } from '../utils/groups';
+import useApi from '../utils/useApi';
 
 export default function PrivateRoute({
   component: Component, 
@@ -34,24 +35,26 @@ export default function PrivateRoute({
   
 
   // groups
-  const [groups, setGroups] = useState([]);
-  const [groupsStatus, setGroupsStatus] = useState(0); // 0 = nothing, 1 = loading, 2 = success, 3 = error
-  const [groupsError, setGroupsError] = useState('');
+  const [handleLoadGroups, groups, groupsStatus, groupsError] = useApi(listGroups);
 
-  async function handleLoadGroups() {
-    setGroupsStatus(1);
-    const result = await listGroups();
+  // const [groups, setGroups] = useState([]);
+  // const [groupsStatus, setGroupsStatus] = useState(0); // 0 = nothing, 1 = loading, 2 = success, 3 = error
+  // const [groupsError, setGroupsError] = useState('');
+
+  // async function handleLoadGroups() {
+  //   setGroupsStatus(1);
+  //   const result = await listGroups();
     
-    // console.log(result);
+  //   // console.log(result);
 
-    if (result.success) {
-      setGroups(result.response.Items);
-      setGroupsStatus(2);
-    } else {
-      setGroupsStatus(3);
-      setGroupsError(result.message);
-    }
-  }
+  //   if (result.success) {
+  //     setGroups(result.response.Items);
+  //     setGroupsStatus(2);
+  //   } else {
+  //     setGroupsStatus(3);
+  //     setGroupsError(result.message);
+  //   }
+  // }
 
   return (
     <Route
@@ -78,13 +81,13 @@ export default function PrivateRoute({
               groups={groups}
               groupsStatus={groupsStatus}
               groupsError={groupsError}
-              handleLoadGroups={handleLoadGroups}
+              handleLoadGroups={() => handleLoadGroups()}
             />
             <main style={{flexGrow: 1, padding: '2rem'}}>
               <Toolbar/>
               <Component 
                 {...props}
-                handleLoadGroups={handleLoadGroups}
+                handleLoadGroups={() => handleLoadGroups()}
                 groups={groups}
                 groupsStatus={groupsStatus}
               />

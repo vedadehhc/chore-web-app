@@ -28,7 +28,7 @@ export async function listUserTasks(userID) {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response};
+    return {success: true, response: response.Items};
   } catch(err) {
     return {success: false, message: err.message};
   }
@@ -62,7 +62,7 @@ export async function listUserGroupTasks(groupID, userID) {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response};
+    return {success: true, response: response.Items};
   } catch(err) {
     return {success: false, message: err.message};
   }
@@ -89,7 +89,7 @@ export async function listGroupTasks(group) {
   try {
     const queryParams = {
       TableName: 'chore-web-app-tasks',
-      IndexName: 'groupID-userID-index',
+      IndexName: 'groupID-taskID-index',
       KeyConditionExpression: 'groupID = :group',
       ExpressionAttributeValues: {
         ':group': {S: groupID},
@@ -98,7 +98,7 @@ export async function listGroupTasks(group) {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response};
+    return {success: true, response: response.Items};
   } catch(err) {
     return {success: false, message: err.message};
   }
@@ -180,8 +180,8 @@ export async function createTask(group, user, taskName, taskDescription, taskDay
   }
 }
 
-// if no user id, use current user
-export async function getTask(groupID, taskID, userID) {
+// if not group owner, use current user id
+export async function getTask(group, taskID) {
   const client = await getNewDynamoClient();
   if(!client.success) {
     return {success: false, message: client.message};
@@ -189,26 +189,43 @@ export async function getTask(groupID, taskID, userID) {
 
   const dynamoClient = client.dynamoClient;
 
-  if(!userID) {
-    userID = parseJwt(client.tokens.idToken)['cognito:username'];
-  } else {
-    // if (group.role.S !== 'owner') {
-    //   return {success: false, message: 'insufficient permissions'};
-    // }
-  }
+  const userID = parseJwt(client.tokens.idToken)['cognito:username'];
+  const groupID = group.groupID.S
 
   try {
-    const getParams = {
-      TableName: 'chore-web-app-tasks',
-      Key: {
-        'userID': {S: userID},
-        'groupID#taskID': {S: `${groupID}#${taskID}`},
+    if(group.role.S === 'owner') {
+      const queryParams = {
+        TableName: 'chore-web-app-tasks',
+        IndexName: 'groupID-taskID-index',
+        KeyConditionExpression: 'groupID = :group AND taskID = :task',
+        ExpressionAttributeValues: {
+          ':group': {S: groupID},
+          ':task': {S: taskID},
+        }
+      };
+      
+      const response = await dynamoClient.send(new QueryCommand(queryParams));
+
+      if (response.Count === 0) {
+        return {success: false, message: 'no such item exists'};
+      } else if (response.Count > 1) {
+        return {success: false, message: 'more than one item matched these details'};
       }
+
+      return {success: true, response: response.Items[0]};
+    } else {
+      const getParams = {
+        TableName: 'chore-web-app-tasks',
+        Key: {
+          'userID': {S: userID},
+          'groupID#taskID': {S: `${groupID}#${taskID}`},
+        }
+      };
+
+      const response = await dynamoClient.send(new GetItemCommand(getParams));
+
+      return {success: true, response: response.Item};
     }
-
-    const response = await dynamoClient.send(new GetItemCommand(getParams));
-
-    return {success: true, response};
   } catch (err) {
     return {success: false, message: err.message};
   }

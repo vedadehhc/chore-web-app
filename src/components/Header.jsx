@@ -96,6 +96,9 @@ export default function Header(props) {
   const [selectedGroupID, setSelectedGroupID] = useState('');
 
   useEffect(() => {
+    if(!groups) {
+      return;
+    }
     setSelectedGroup('');
     setSelectedGroupID('');
     groups.forEach(group => {

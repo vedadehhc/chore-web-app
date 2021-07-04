@@ -159,13 +159,13 @@ export async function joinGroup(groupCode) {
       Key: {
         groupID: {'S': groupCode},
       },
-      ConditionExpression: 'attribute_exists(#u) AND NOT contains(#u, :userID)',
+      ConditionExpression: 'attribute_exists(#u)', // AND NOT contains(#u, :userID)
       UpdateExpression: 'ADD #u :userIDSet, numUsers :one',
       ExpressionAttributeNames: {
         '#u':'users',
       },
       ExpressionAttributeValues: {
-        ':userID': {S: userID},
+        // ':userID': {S: userID},
         ':userIDSet': {SS: [userID]},
         ':one': {N: '1'},
       },
@@ -216,7 +216,7 @@ export async function listGroups() {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response};
+    return {success: true, response: response.Items};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -247,7 +247,7 @@ export async function listUsersInGroup(groupID){
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response};
+    return {success: true, response: response.Items};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -282,7 +282,7 @@ export async function removeUserFromGroup(group, user) {
   if(!getTasks.success) {
     return {success: false, message: getTasks.message};
   }
-  const tasks = getTasks.response.Items;
+  const tasks = getTasks.response;
 
   try {
     const deleteParams = {
