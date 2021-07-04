@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import  { PutItemCommand, GetItemCommand, UpdateItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
+import  { PutItemCommand, GetItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 
 import { getNewDynamoClient } from './dynamo';
 import parseJwt from './parseJwt';

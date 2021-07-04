@@ -2,7 +2,7 @@ import  { PutItemCommand, GetItemCommand, UpdateItemCommand, QueryCommand, Delet
 
 import { getNewDynamoClient } from './dynamo';
 import parseJwt from './parseJwt';
-import { listGroupTasks, listUserGroupTasks, listUserTasks } from './tasks';
+import { listGroupTasks, listUserGroupTasks } from './tasks';
 
 
 // generates a group id using only numbers and upper case letters 
