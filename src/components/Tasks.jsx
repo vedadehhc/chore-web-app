@@ -28,6 +28,7 @@ import AddIcon from '@material-ui/icons/Add';
 
 import { createTask, deleteTask, getTask, listGroupTasks } from "../utils/tasks";
 import useApi from "../utils/useApi";
+import SnackbarAlert from "./SnackbarAlert";
 
 
 const useStyles = makeStyles((theme) =>  ({
@@ -119,14 +120,14 @@ export default function Tasks(props) {
     setShowCreateTask(false);
   }
 
-  // TODO: add success message
-  const [handleCreateTask, , createTaskStatus, createTaskMessage] = useApi(
+  const [handleCreateTask, , createTaskStatus, createTaskMessage, [,,setCreateTaskMessage]] = useApi(
     createTask, 
     () => [group, assignedUser, taskName, taskDescription, selectedDays],
     (e) => {
       e.preventDefault();
     }
   );
+
   // const [createTaskStatus, setCreateTaskStatus] = useState(0); // 0 = waiting, 1 = loading, 2 = success, 3 = error
   // const [createTaskMessage, setCreateTaskMessage] = useState(''); 
 
@@ -149,7 +150,7 @@ export default function Tasks(props) {
   // delete task
   const [deleteTaskID, setDeleteTaskID] = useState('');
 
-  const [handleDeleteTask, , deleteTaskStatus, deleteTaskMessage] = useApi(
+  const [handleDeleteTask, , deleteTaskStatus, deleteTaskMessage, [,,setDeleteTaskMessage]] = useApi(
     deleteTask, 
     () => [group],
     (userID, taskID) => {
@@ -273,16 +274,18 @@ export default function Tasks(props) {
                             userID: task.userID.S,
                           },
                         }}
+                        style={{ borderWidth: 1, borderColor: '#333', borderStyle: 'solid', borderRadius: 5, marginBottom: 5 }}
                       >
                         <div style={{display: 'flex', width: '100%', alignItems:'center', justifyContent: 'space-between'}}>
                           <ListItemText 
                             primary={task.taskName.S.length > 10 ? `${task.taskName.S.substring(0,7)}...` : task.taskName.S}
                             secondary={task.taskDescription.S.length > 50 ? `${task.taskDescription.S.substring(0, 47)}...` : task.taskDescription.S}
-                            style={{width: '20%'}}
+                            style={{width: '20%', overflowWrap: 'anywhere', marginRight: 5}}
                           />
                           <ListItemText
                             primary={task.userName.S}
                             secondary={task.userID.S}
+                            style={{overflowWrap: 'anywhere'}}
                           />
                           <div style={{display: 'flex', justifyContent: 'flex-end', marginLeft: 10}}>  
                             {days.map((day) => {
@@ -425,6 +428,9 @@ export default function Tasks(props) {
                 </form>
               </div>
             </Dialog>
+
+            <SnackbarAlert message={createTaskMessage} setMessage={setCreateTaskMessage} status={createTaskStatus}/>
+            <SnackbarAlert message={deleteTaskMessage} setMessage={setDeleteTaskMessage} status={deleteTaskStatus}/>
           </React.Fragment> 
         : <Redirect to={`/groups/${group.groupID.S}`}/>
         }
@@ -493,9 +499,9 @@ function Task(props) {
             task.taskDays.SS.includes(value) && <Chip key={value} label={value} className={classes.chip} />
           ))}
         </div>
-        <Typography variant='body1'>
+        <p style={{overflowWrap: 'anywhere'}}>
           {task.taskDescription.S}
-        </Typography>
+        </p>
       </div>
     )
     : (

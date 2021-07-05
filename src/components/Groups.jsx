@@ -322,7 +322,7 @@ function Group(props) {
         <Switch>
           <Route exact path={`/groups/${groupID}`}>
             <div style={{display: 'flex', alignItems: 'center'}}>
-              <IconButton disabled={userTasksStatus < 2} onClick={handleGetUserTasks}>
+              <IconButton disabled={userTasksStatus < 2} onClick={() => handleGetUserTasks()}>
                 <RefreshIcon/>
               </IconButton>
               <Typography variant='h6'>{userTasksStatus === 2 && userTasks && `You have ${userTasks.length} tasks in this group`}</Typography>
@@ -338,12 +338,13 @@ function Group(props) {
                     button
                     component={RouterLink}
                     to={`/groups/${groupID}/tasks/${task.taskID.S}`}
+                    style={{ borderWidth: 1, borderColor: '#333', borderStyle: 'solid', borderRadius: 5, marginBottom: 5 }}
                   >
                     <div style={{display: 'flex', width: '100%', alignItems:'center', justifyContent: 'space-between'}}>
                       <ListItemText 
                         primary={task.taskName.S}
                         secondary={`${task.taskDescription.S.length > 47 ? `${task.taskDescription.S.substring(0, 47)}...` : task.taskDescription.S}`}
-                        // style={{overflow: 'hidden'}}
+                        style={{overflowWrap: 'anywhere'}}
                       />
                       <div style={{display: 'flex', justifyContent: 'flex-end', flexGrow: 1, marginLeft: 10}}>  
                         {days.map((day) => {
@@ -396,7 +397,7 @@ function Group(props) {
               <List>
                 {groupUsers.map((user, index) => (
                   <ListItem key={`group-user-${index}-${user.userID.S}`}>
-                    <ListItemText primary={user.userName.S} secondary={user.userID.S}></ListItemText>
+                    <ListItemText primary={user.userName.S} secondary={user.userID.S} style={{overflowWrap: 'anywhere'}}></ListItemText>
                     <ListItemText secondary={user.role.S}></ListItemText>
 
                     <ListItemSecondaryAction>

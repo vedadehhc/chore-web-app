@@ -13,6 +13,7 @@ import RefreshIcon from '@material-ui/icons/Refresh';
 
 import { listUserTasks } from '../utils/tasks';
 import useApi from '../utils/useApi';
+import SnackbarAlert from './SnackbarAlert';
 
 const useStyles = makeStyles((theme) => ({
   day: {
@@ -39,7 +40,7 @@ export default function Home() {
   const classes = useStyles();
 
   // tasks
-  const [handleGetUserTasks, userTasks, userTasksStatus, userTasksMessage] = useApi(listUserTasks);
+  const [handleGetUserTasks, userTasks, userTasksStatus, userTasksMessage, [,,setUserTasksMessage]] = useApi(listUserTasks);
   useEffect(() => handleGetUserTasks(), []);
   
   // const [userTasks, setUserTasks] = useState(null);
@@ -74,12 +75,18 @@ export default function Home() {
           <List style={{ marginBottom: 30 }}>
             {userTasks.length === 0 && 'You do not have any tasks at this time.'}
             {userTasks.map((task, index) => (
-              <ListItem key={`user-task-${index}-${task.taskID.S}`} button component={RouterLink} to={`/groups/${task.groupID.S}/tasks/${task.taskID.S}`}>
+              <ListItem 
+                key={`user-task-${index}-${task.taskID.S}`} 
+                button 
+                component={RouterLink} 
+                to={`/groups/${task.groupID.S}/tasks/${task.taskID.S}`}
+                style={{ borderWidth: 1, borderColor: '#333', borderStyle: 'solid', borderRadius: 5, marginBottom: 5 }}
+              >
                 <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
                   <ListItemText
                     primary={task.taskName.S}
                     secondary={`${task.taskDescription.S.length > 47 ? `${task.taskDescription.S.substring(0, 47)}...` : task.taskDescription.S}`}
-                  // style={{overflow: 'hidden'}}
+                  style={{overflowWrap: 'anywhere'}}
                   />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', flexGrow: 1, marginLeft: 10 }}>
                     {days.map((day) => {
@@ -94,10 +101,7 @@ export default function Home() {
               </ListItem>
             ))}
           </List>
-          :
-          <div>
-            <p>{userTasksMessage}</p>
-          </div>
+          : <SnackbarAlert message={userTasksMessage} setMessage={setUserTasksMessage} status={userTasksStatus}/>
       }
     </div>
   );

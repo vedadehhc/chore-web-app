@@ -28,7 +28,7 @@ export async function listUserTasks(userID) {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response: response.Items};
+    return {success: true, message: 'Tasks listed!', response: response.Items};
   } catch(err) {
     return {success: false, message: err.message};
   }
@@ -62,7 +62,7 @@ export async function listUserGroupTasks(groupID, userID) {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response: response.Items};
+    return {success: true, message: 'Tasks for this group listed!', response: response.Items};
   } catch(err) {
     return {success: false, message: err.message};
   }
@@ -98,7 +98,7 @@ export async function listGroupTasks(group) {
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response: response.Items};
+    return {success: true, message: 'Tasks for this group listed!', response: response.Items};
   } catch(err) {
     return {success: false, message: err.message};
   }
@@ -174,7 +174,7 @@ export async function createTask(group, user, taskName, taskDescription, taskDay
 
     const response = await dynamoClient.send(new PutItemCommand(putParams));
 
-    return {success: true, response};
+    return {success: true, message: 'Task created successfully!', response};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -212,7 +212,7 @@ export async function getTask(group, taskID) {
         return {success: false, message: 'more than one item matched these details'};
       }
 
-      return {success: true, response: response.Items[0]};
+      return {success: true, message: 'Got task.', response: response.Items[0]};
     } else {
       const getParams = {
         TableName: 'chore-web-app-tasks',
@@ -224,7 +224,7 @@ export async function getTask(group, taskID) {
 
       const response = await dynamoClient.send(new GetItemCommand(getParams));
 
-      return {success: true, response: response.Item};
+      return {success: true, message: 'Got task.', response: response.Item};
     }
   } catch (err) {
     return {success: false, message: err.message};
@@ -256,7 +256,7 @@ export async function deleteTask(userID, group, taskID) {
 
     const response = await dynamoClient.send(new DeleteItemCommand(deleteParams));
 
-    return {success: true, response};
+    return {success: true, message: 'Task deleted successfully!', response};
   } catch(err) {
     return {success: false, message: err.message};
   }

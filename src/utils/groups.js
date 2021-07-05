@@ -43,7 +43,7 @@ export async function generateValidGroupID(dynamoClient=null) {
   while(!works) {
     // timeout after 5 secs
     if (Date.now() - startTime > 5000){
-      return {success: false, message: 'timed out before valid id was found'};
+      return {success: false, message: 'Timed out before a valid group id was found.'};
     }
 
     groupCode = generateGroupID();
@@ -59,19 +59,19 @@ export async function generateValidGroupID(dynamoClient=null) {
   
       const response = await dynamoClient.send(new GetItemCommand(getParams));
       
-      console.log(response);
+      // console.log(response);
       if(response.Item) {
         works = false;
       } else {
         works = true;
       }
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       return {success: false, message: err.message};
     }
   }
 
-  console.log('found valid id:', groupCode);
+  // console.log('found valid id:', groupCode);
   return {success: true, groupCode};
 }
 
@@ -121,7 +121,7 @@ export async function createGroup(groupName) {
 
     const response2 = await dynamoClient.send(new PutItemCommand(putUserGroupParams));
 
-    return {success: true, response, response2};
+    return {success: true, message: 'Group created successfully!', response, response2};
   } catch(err) {
     console.log(err);
     return {success: false, message: err.message};
@@ -186,7 +186,7 @@ export async function joinGroup(groupCode) {
 
     const response3 = await dynamoClient.send(new PutItemCommand(putUserGroupParams));
 
-    return {success: true, response, response2, response3};
+    return {success: true, message: 'Group joined successfully!', response, response2, response3};
   } catch (err) {
     if(err.message === 'The conditional request failed') {
       err.message = 'You are already in this group';
@@ -247,7 +247,7 @@ export async function listUsersInGroup(groupID){
 
     const response = await dynamoClient.send(new QueryCommand(queryParams));
 
-    return {success: true, response: response.Items};
+    return {success: true, message: 'Groups listed!', response: response.Items};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -327,7 +327,7 @@ export async function removeUserFromGroup(group, user) {
 
     const response2 = await dynamoClient.send(new UpdateItemCommand(updateGroupParams));
 
-    return {success: true, response, response2, taskResponses};
+    return {success: true, message: user ? 'User removed from group.' : 'You have left this group.', response, response2, taskResponses};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -353,7 +353,7 @@ export async function deleteGroup(group) {
   if(!getTasks.success) {
     return {success: false, message: getTasks.message};
   }
-  const tasks = getTasks.response.Items;
+  const tasks = getTasks.response;
 
   try {
     const deleteGroupParams = {
@@ -398,7 +398,7 @@ export async function deleteGroup(group) {
       taskResponses.push(taskResponse);
     }
 
-    return {success: true, response, userResponses, taskResponses};
+    return {success: true, message: 'Group deleted', response, userResponses, taskResponses};
   } catch (err) {
     return {success: false, message: err.message};
   }

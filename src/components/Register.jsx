@@ -84,7 +84,7 @@ export default function Register(props) {
       setRegisterStatus(2);
       // auto login?
       // history.push('/login');
-      setResponseMessage('Registered successfully!');
+      setResponseMessage(result.message);
     } else {
       setRegisterStatus(3);
       setResponseMessage(result.message);

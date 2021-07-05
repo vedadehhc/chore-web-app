@@ -17,7 +17,7 @@ export default function useApi(apiFunction, getApiParams=()=>[], preCall, postCa
     
     
     const result = await apiFunction(...preParams, ...getApiParams(), ...postParams);
-    console.log(result);
+    // console.log(result);
 
     if(postCall) {
       await postCall(...preParams, ...postParams);
@@ -30,6 +30,7 @@ export default function useApi(apiFunction, getApiParams=()=>[], preCall, postCa
       }
 
       setApiResult(result.response);
+      setApiMessage(result.message);
       setApiStatus(2);
     } else {
 
@@ -42,5 +43,5 @@ export default function useApi(apiFunction, getApiParams=()=>[], preCall, postCa
     }
   }
 
-  return [handleCallApi, apiResult, apiStatus, apiMessage];
+  return [handleCallApi, apiResult, apiStatus, apiMessage, [setApiResult, setApiStatus, setApiMessage]];
 }

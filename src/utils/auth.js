@@ -44,7 +44,7 @@ export async function login(username, password) {
     setTokens(response.AuthenticationResult.IdToken, response.AuthenticationResult.AccessToken);
     setRefreshToken(response.AuthenticationResult.RefreshToken);
 
-    return {success: true, message: 'success', response};
+    return {success: true, message: 'Logged in successfully!', response};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -68,7 +68,7 @@ export async function register(username, password, name) {
     // need to add user to dynamo table...
     // admin user: create group, regular: add to group
 
-    return {success: true, message: 'success', response};
+    return {success: true, message: 'Registered successfully!', response};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -92,7 +92,7 @@ export async function logout() {
 
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    return {success: true, message: 'no tokens to revoke'};
+    return {success: true, message: 'Already logged out!'};
   }
 
   clearTokens();
@@ -105,7 +105,7 @@ export async function logout() {
 
     authCognitoClient = null;
     
-    return {success: true, message: 'logged out succesfully', response};
+    return {success: true, message: 'Logged out succesfully!', response};
   } catch (err) {
     return {success: false, message: err.message};
   }
@@ -130,7 +130,7 @@ export async function getValidTokens() {
 export async function refreshTokens() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    return {success: false, message: 'no refresh token found.'};
+    return {success: false, message: 'No refresh token found.'};
   }
 
   try {
