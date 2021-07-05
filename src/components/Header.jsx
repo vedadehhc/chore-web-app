@@ -219,6 +219,11 @@ export default function Header(props) {
                 </Grid>
               </Grid>
             }
+            {groupsStatus === 2 && groups.length === 0 && 
+              <ListItem>
+                You do not have any groups at this time.
+              </ListItem>
+            }
             {groupsStatus === 2 && 
               groups.map((group, index) => (
                   <ListItem button 
