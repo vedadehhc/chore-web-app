@@ -29,6 +29,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
 import Copyright from './Copyright';
 import { register } from '../utils/auth';
+import useApi from '../utils/useApi';
 
 const useStyles = makeStyles((theme) => ({
   wrapper: {
@@ -57,7 +58,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Register(props) {
   const classes = useStyles();
-  const history = useHistory();
 
   // const [role, setRole] = useState('');
   const [username, setUsername] = useState('');
@@ -66,30 +66,27 @@ export default function Register(props) {
   // const [groupName, setGroupName] = useState('');
   // const [groupCode, setGroupCode] = useState('');
 
-  const [registerStatus, setRegisterStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
-  const [responseMessage, setResponseMessage] = useState('');
+  const [handleRegister, , registerStatus, responseMessage, [,,setResponseMessage]] = useApi(register, () => [username, password, name]);
 
+  // const [registerStatus, setRegisterStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
+  // const [responseMessage, setResponseMessage] = useState('');
 
-  // TODO: rework so that all group CRUD is after auth. (multiple group)
-  // remove extra options (parent, child, code, etc.)
-  // auth immediately after register
-
-  async function handleRegister(event) {
-    event.preventDefault();
-    setRegisterStatus(1);
+  // async function handleRegister(event) {
+  //   event.preventDefault();
+  //   setRegisterStatus(1);
     
-    const result = await register(username, password, name);
+  //   const result = await register(username, password, name);
 
-    if (result.success) {
-      setRegisterStatus(2);
-      // auto login?
-      // history.push('/login');
-      setResponseMessage(result.message);
-    } else {
-      setRegisterStatus(3);
-      setResponseMessage(result.message);
-    }
-  }
+  //   if (result.success) {
+  //     setRegisterStatus(2);
+  //     // auto login?
+  //     // history.push('/login');
+  //     setResponseMessage(result.message);
+  //   } else {
+  //     setRegisterStatus(3);
+  //     setResponseMessage(result.message);
+  //   }
+  // }
 
   // function handleRoleChange(event) {
   //   setRole(event.target.value);
@@ -126,7 +123,7 @@ export default function Register(props) {
           Register
         </Typography>
         <div style={{height:10}}/>
-        <form className={classes.form} onSubmit={handleRegister}>
+        <form className={classes.form} onSubmit={(e) => {e.preventDefault(); handleRegister()}}>
           {/* <RadioGroup 
             row 
             style={{alignItems:'center', justifyContent: 'center'}} 

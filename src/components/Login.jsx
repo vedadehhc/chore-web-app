@@ -23,6 +23,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
 import Copyright from './Copyright';
 import { login } from '../utils/auth';
+import useApi from '../utils/useApi';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -65,28 +66,35 @@ export default function Login(props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const [loginStatus, setLoginStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
-  const [errorMessage, setErrorMessage] = useState('');
+  const [handleLogin, , loginStatus, errorMessage, [,,setErrorMessage]] = useApi(
+    login,
+    () => [username, password],
+    () => {},
+    () => {},
+    () => history.push('/')
+  );
 
-  async function handleLogin(event) {
-    event.preventDefault();
-    setLoginStatus(1);
+  // const [loginStatus, setLoginStatus] = useState(0); // 0 = not submitted, 1 = loading, 2 = success, 3 = error
+  // const [errorMessage, setErrorMessage] = useState('');
+
+  // async function handleLogin(event) {
+  //   event.preventDefault();
+  //   setLoginStatus(1);
     
-    const result = await login(username, password);
+  //   const result = await login(username, password);
 
-    console.log(result);
+  //   console.log(result);
 
-    // TODO: add error handling
-    if(result.success) {
-      setLoginStatus(2);
-      history.push('/');
-    } else {
-      setLoginStatus(3);
-      setErrorMessage(result.message);
-      // allow resubmission after 5 seconds
-      setTimeout(() => setLoginStatus(0), 5000);
-    }
-  }
+  //   if(result.success) {
+  //     setLoginStatus(2);
+  //     history.push('/');
+  //   } else {
+  //     setLoginStatus(3);
+  //     setErrorMessage(result.message);
+  //     // allow resubmission after 5 seconds
+  //     setTimeout(() => setLoginStatus(0), 5000);
+  //   }
+  // }
 
   function handleUsernameChange(event) {
     setUsername(event.target.value);
@@ -110,7 +118,7 @@ export default function Login(props) {
         <Typography component="h1" variant="h5">
           Log In
         </Typography>
-        <form className={classes.form} onSubmit={handleLogin}>
+        <form className={classes.form} onSubmit={(e) => {e.preventDefault(); handleLogin()}}>
           <TextField
             variant="outlined"
             margin="normal"
